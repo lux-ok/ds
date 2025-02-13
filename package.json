@@ -1,24 +1,43 @@
 {
-  "name": "ds",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    "import": "./dist/index.js",
-    "require": "./dist/index.js",
-    "types": "./dist/index.d.ts"
+  "name": "@lux721/ds",
+  "version": "0.1.0",
+  "description": "Generic data set control library for js/ts",
+  "author": "Thomas Choi",
+  "license": "MIT",
+  "keywords": [
+    "js",
+    "npm",
+    "generic dataset",
+    "generic data tables",
+    "tables",
+    "rows"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomaschoi721/ds.git"
   },
   "scripts": {
-    "build": "bunx tsc --project tsconfig.json",
+    "build": "bunx rimraf dist && bunx tsc --project tsconfig.json",
     "clean": "bunx rimraf dist",
     "dev": "bunx tsc --watch",
-    "test": "bun test"
+    "test": "bun test",
+    "prepublishOnly": "bun run clean && bun run build && echo '{\"type\": \"module\"}' > dist/package.json"
   },
-  "files": [
-    "dist/**/*"
-  ],
   "devDependencies": {
     "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "exports": {
+    "import": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
   }
 }
