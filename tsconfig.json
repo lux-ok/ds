@@ -24,7 +24,7 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
 
-    "outDir": "./lib", // 輸出編譯後的 JavaScript 文件
+    "outDir": "dist", // 輸出編譯後的 JavaScript 文件
     "declaration": true, // 生成類型定義文件 (.d.ts)
     "declarationMap": true, // 生成 .d.ts 的映射文件
     "esModuleInterop": true, // 允許 ES 模塊與 CommonJS 模塊互操作
