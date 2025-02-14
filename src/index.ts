@@ -1,7 +1,9 @@
 export interface DsCore<T extends object> {
   tables: T[][];
-  tablesSel: number[];
+  tablesSel: Tid[];
   rowsSel: Loc[];
+  mode?: DsMode;
+  state?: DsState;
 }
 
 export type MultiMode = "ctrl" | "shift" | undefined;
@@ -20,17 +22,18 @@ export type Tid = number;
 export class Ds<T extends object> {
   /**
    * Creates an instance of Ds.
-   * @param {{ core: DsCore<T>; useClone?: boolean }} params
+   * @param {{ dsCore: DsCore<T>; useClone?: boolean }} params
    * @memberof Ds
    */
   constructor(params: { core: DsCore<T>; useClone?: boolean }) {
-    this.#core = params.core;
+    this.core = params.core;
     this.#useClone = params.useClone ?? true; // - default use structureClone()
+    console.log("From Local 123");
   }
 
   /* ~ private vars */
 
-  #core: DsCore<T>;
+  protected core: DsCore<T>;
   #useClone?: boolean;
   #oldSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
   #newSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
@@ -45,20 +48,20 @@ export class Ds<T extends object> {
     const buf: T[][] = changeSel
       ? this.#newSelRef.tables
       : this.#oldSelRef.tables;
-    this.#core.tablesSel.length = 0;
+    this.core.tablesSel.length = 0;
     buf.forEach((table) => {
       const { found, tid: t } = this.hasTableRef(table);
-      found && this.#core.tablesSel.push(t);
+      found && this.core.tablesSel.push(t);
     });
     buf.length = 0;
   }
 
   #updateRowSel(changeSel?: boolean) {
     const buf: T[] = changeSel ? this.#newSelRef.rows : this.#oldSelRef.rows;
-    this.#core.rowsSel.length = 0;
+    this.core.rowsSel.length = 0;
     buf.forEach((row) => {
       const { found, loc } = this.hasRowRef(row);
-      found && this.#core.rowsSel.push(loc);
+      found && this.core.rowsSel.push(loc);
     });
     buf.length = 0;
   }
@@ -73,7 +76,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tables(): T[][] {
-    return this.#core.tables;
+    return this.core.tables;
   }
 
   /**
@@ -84,7 +87,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tablesCnt(): number {
-    return this.#core.tables.length;
+    return this.core.tables.length;
   }
 
   /* ~ tablesSel */
@@ -96,7 +99,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tablesSel() {
-    return this.#core.tablesSel;
+    return this.core.tablesSel;
   }
 
   /**
@@ -106,7 +109,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tablesSelRef() {
-    return this.#core.tablesSel.map((loc) => this.#core.tables[loc]);
+    return this.core.tablesSel.map((loc) => this.core.tables[loc]);
   }
 
   /* ~ rowsSel */
@@ -118,7 +121,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowsSel() {
-    return this.#core.rowsSel;
+    return this.core.rowsSel;
   }
 
   /**
@@ -128,7 +131,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowsSelRef() {
-    return this.#core.rowsSel.map((loc) => this.#core.tables[loc.t][loc.r]);
+    return this.core.rowsSel.map((loc) => this.core.tables[loc.t][loc.r]);
   }
 
   /* ~ table0 (single table case) */
@@ -140,7 +143,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get table(): T[] | undefined {
-    return this.#core.tables[0];
+    return this.core.tables[0];
   }
 
   /**
@@ -151,7 +154,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowCnt(): number | undefined {
-    return this.#core.tables[0]?.length;
+    return this.core.tables[0]?.length;
   }
 
   /* ~ get tableSel[0] & tableSel[0] Reference, (single selection case)  */
@@ -164,8 +167,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tableSel(): number | undefined {
-    return this.#core.tablesSel.length === 1
-      ? this.#core.tablesSel[0]
+    return this.core.tablesSel.length === 1
+      ? this.core.tablesSel[0]
       : undefined;
   }
 
@@ -177,8 +180,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tableSelRef(): T[] {
-    return this.#core.tablesSel.length === 1
-      ? this.#core.tables[this.#core.tablesSel[0]]
+    return this.core.tablesSel.length === 1
+      ? this.core.tables[this.core.tablesSel[0]]
       : [];
   }
 
@@ -192,8 +195,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowSel(): Loc | undefined {
-    return this.#core.rowsSel.length === 1
-      ? { t: this.#core.rowsSel[0].t, r: this.#core.rowsSel[0].r }
+    return this.core.rowsSel.length === 1
+      ? { t: this.core.rowsSel[0].t, r: this.core.rowsSel[0].r }
       : undefined;
   }
 
@@ -205,8 +208,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowSelRef(): T | undefined {
-    return this.#core.rowsSel.length === 1
-      ? this.#core.tables[this.#core.rowsSel[0].t][this.#core.rowsSel[0].r]
+    return this.core.rowsSel.length === 1
+      ? this.core.tables[this.core.rowsSel[0].t][this.core.rowsSel[0].r]
       : undefined;
   }
 
@@ -220,7 +223,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasTable(t: number): { found: boolean; tableRef: T[] | undefined } {
-    const tableRef = this.#core.tables[t];
+    const tableRef = this.core.tables[t];
     return { found: tableRef !== undefined, tableRef };
   }
 
@@ -232,7 +235,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasRow(loc: Loc): { found: boolean; rowRef: T | undefined } {
-    const rowRef = this.#core.tables[loc.t]?.[loc.r];
+    const rowRef = this.core.tables[loc.t]?.[loc.r];
     return { found: rowRef !== undefined, rowRef };
   }
 
@@ -246,7 +249,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasTableRef(tableRef: T[]): { found: boolean; tid: number } {
-    const tid = this.#core.tables.indexOf(tableRef);
+    const tid = this.core.tables.indexOf(tableRef);
     return { found: tid > -1, tid };
   }
 
@@ -258,10 +261,10 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasRowRef(rowRef: T): { found: boolean; loc: Loc; row?: T } {
-    for (let t = 0; t < this.#core.tables.length; t++) {
-      let r = this.#core.tables[t].indexOf(rowRef);
+    for (let t = 0; t < this.core.tables.length; t++) {
+      let r = this.core.tables[t].indexOf(rowRef);
       if (r !== -1)
-        return { found: true, loc: { t, r }, row: this.#core.tables[t]?.[r] };
+        return { found: true, loc: { t, r }, row: this.core.tables[t]?.[r] };
     }
     return { found: false, loc: { t: -1, r: -1 } };
   }
@@ -311,7 +314,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   sortTablesSel(direction?: "forward" | "reverse") {
-    this.#core.tablesSel.sort((a, b) =>
+    this.core.tablesSel.sort((a, b) =>
       direction === "reverse" ? b - a : a - b
     );
   }
@@ -323,7 +326,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   sortRowsSel(direction?: "forward" | "reverse") {
-    this.#core.rowsSel.sort((a, b) => {
+    this.core.rowsSel.sort((a, b) => {
       if (a.t === b.t) return direction === "reverse" ? b.r - a.r : a.r - b.r;
       return direction === "reverse" ? b.t - a.t : a.t - b.t;
     });
@@ -355,7 +358,7 @@ export class Ds<T extends object> {
     }
 
     if (success) {
-      multiSelectionLogic(loc, this.#core.tablesSel, option?.mode);
+      multiSelectionLogic(loc, this.core.tablesSel, option?.mode);
       option?.sort && this.sortTablesSel(option.sort);
     }
 
@@ -386,7 +389,7 @@ export class Ds<T extends object> {
     }
 
     if (success) {
-      multiSelectionLogic(loc, this.#core.rowsSel, option?.mode);
+      multiSelectionLogic(loc, this.core.rowsSel, option?.mode);
       option?.sort && this.sortRowsSel(option.sort);
     }
 
@@ -449,7 +452,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   deselectAllTable() {
-    this.#core.tablesSel.length = 0;
+    this.core.tablesSel.length = 0;
   }
 
   /**
@@ -458,7 +461,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   deselectAllRow() {
-    this.#core.rowsSel.length = 0;
+    this.core.rowsSel.length = 0;
   }
 
   /**
@@ -467,8 +470,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   deselectAll() {
-    this.#core.rowsSel.length = 0;
-    this.#core.tablesSel.length = 0;
+    this.core.rowsSel.length = 0;
+    this.core.tablesSel.length = 0;
   }
 
   /* ~ isSelected */
@@ -479,7 +482,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   isSelectedTable(t: number): boolean {
-    return this.#core.tablesSel.includes(t);
+    return this.core.tablesSel.includes(t);
   }
 
   /**
@@ -488,7 +491,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   isSelectedRow(loc: Loc): boolean {
-    return this.#core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
+    return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
   /**
@@ -498,7 +501,7 @@ export class Ds<T extends object> {
    */
   isSelectedTableRef(tableRef: T[]): boolean {
     const { tid: t } = this.hasTableRef(tableRef);
-    return this.#core.tablesSel.includes(t);
+    return this.core.tablesSel.includes(t);
   }
 
   /**
@@ -508,7 +511,7 @@ export class Ds<T extends object> {
    */
   isSelectedRowRef(rowRef: T): boolean {
     const { loc } = this.hasRowRef(rowRef);
-    return this.#core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
+    return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
   /**
@@ -589,7 +592,7 @@ export class Ds<T extends object> {
       useClone?: boolean;
     }
   ): { success: boolean } {
-    const { tables, tablesSel, rowsSel } = this.#core;
+    const { tables, tablesSel, rowsSel } = this.core;
 
     // - default value when params undefined
     const select = target?.select;
@@ -1147,4 +1150,172 @@ function multiSelectionLogic<L extends number | Loc>(
     }
     //
   }
+}
+
+export type DsMode = string;
+
+export enum DsState {
+  Unknown = -1,
+  Normal = 0,
+  Starting = 1,
+  Submitting = 2,
+  Appling = 3,
+}
+
+export const DsStateMap = new Map<number, string>(
+  Object.entries(DsState).map(
+    ([key, value]) => [value, key] as [DsState, string]
+  )
+);
+
+export interface DsModeConfig<T = any> {
+  applyHandler: () => Promise<{ success: boolean; data: T | null }>;
+  successHandler: (data?: T) => void;
+}
+
+export class Dss<T extends object> extends Ds<T> {
+  constructor(params: { core: DsCore<T>; useClone?: boolean }) {
+    super(params);
+    this.core.state = DsState.Normal;
+  }
+
+  #modes: Record<DsMode, DsModeConfig> = {};
+  #exState: DsState = DsState.Normal;
+
+  get currentState() {
+    return { mode: this.core.mode, state: this.core.state };
+  }
+
+  registerMode<T>(mode: DsMode, config: DsModeConfig<T>) {
+    this.#modes[mode] = config;
+  }
+
+  // todo -------------------------------------------------
+
+  /* ~ Normal */
+
+  start(mode: DsMode, submitted?: boolean, confirmed?: boolean) {
+    if (this.#modes[mode] === undefined) {
+      console.log("Mode invalid, cannot Start");
+      return;
+    }
+    if (this.core.state !== DsState.Normal) {
+      console.log("Not in Browse mode, cannot start");
+      return;
+    }
+
+    this.core.mode = mode;
+    console.log("Mode:", this.currentState.mode);
+
+    if (submitted) {
+      if (confirmed) {
+        // - go Appling
+        this.core.state = DsState.Appling;
+        this.#process();
+      } else {
+        // - go Submitting
+        this.core.state = DsState.Submitting;
+      }
+    } else {
+      // - go Starting
+      this.core.state = DsState.Starting;
+    }
+  }
+
+  /* ~ Starting */
+
+  submit(execute?: boolean, confirmed?: boolean) {
+    if (this.core.state !== DsState.Starting) {
+      console.log("invalid state, cannot go submit");
+      return;
+    }
+
+    if (execute === false) {
+      // - back to Normal
+      this.core.state = DsState.Normal;
+    } else {
+      if (confirmed) {
+        // - go Appling
+        this.core.state = DsState.Appling;
+        this.#process();
+      } else {
+        // - go submitting
+        this.core.state = DsState.Submitting;
+      }
+    }
+  }
+
+  /* ~ Submitting */
+
+  apply(execute?: boolean) {
+    if (this.core.state !== DsState.Submitting) {
+      console.log("invalid state, cannot go submit");
+      return;
+    }
+
+    if (execute === false) {
+      // - abort submit, back to Start
+      this.core.state = this.#exState; // check
+    } else {
+      // - go Appling
+      this.core.state = DsState.Appling;
+      this.#process();
+    }
+  }
+
+  /* ~ Appling */
+  #process() {
+    //
+    this.cl("#process()");
+
+    // this.#modes = {};
+
+    try {
+      // - try catch for mode undefined protection
+      this.#modes[this.core.mode!]
+        .applyHandler()
+        .then((r) => {
+          const { success, data } = r;
+
+          if (success) {
+            //
+            // this.#modes = {};
+            // - success: update to local data, go Normal
+            this.#modes[this.core.mode!].successHandler(data);
+            this.core.state = DsState.Normal;
+            this.cl("actionHandler()");
+            //
+          } else {
+            // - error: back to Start
+            this.core.state = this.#exState; // check
+            this.cl("actionHandler()");
+            //
+          }
+          //
+        })
+        .catch((error) => {
+          console.log(error);
+          this.core.state = this.#exState; // check
+        });
+    } catch (error) {
+      console.log(error);
+      this.core.state = this.#exState; // check
+    }
+
+    this.cl("Final  ");
+  }
+
+  cl(event: string) {
+    console.log(
+      `[ ${event} ] `,
+      "exState:",
+      dsStateStr(this.#exState),
+      "State:",
+      dsStateStr(this.currentState.state)
+    );
+  }
+}
+
+export function dsStateStr(state?: DsState) {
+  return DsStateMap.get(state ?? DsState.Unknown);
 }
