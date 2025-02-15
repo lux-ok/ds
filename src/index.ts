@@ -18,6 +18,7 @@ export type Tid = number;
  * @export
  * @class Ds
  * @template T
+ * @template {object} T
  */
 export class Ds<T extends object> {
   /**
@@ -28,19 +29,20 @@ export class Ds<T extends object> {
   constructor(params: { core: DsCore<T>; useClone?: boolean }) {
     this.core = params.core;
     this.#useClone = params.useClone ?? true; // - default use structureClone()
-    console.log("From Local 123");
+    console.log("Ds Version:", this.#version);
   }
 
   /* ~ private vars */
 
   protected core: DsCore<T>;
+  #version = "0.1.1";
   #useClone?: boolean;
   #oldSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
   #newSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
 
   /* ~ private utils */
 
-  #log(msg: string, func?: string) {
+  protected log(msg: string, func?: string) {
     console.log(func ? func + ": " + msg : msg);
   }
 
@@ -64,6 +66,16 @@ export class Ds<T extends object> {
       found && this.core.rowsSel.push(loc);
     });
     buf.length = 0;
+  }
+
+  /**
+   * Print this library version
+   *
+   * @readonly
+   * @memberof Ds
+   */
+  get version() {
+    return this.#version;
   }
 
   /* ~ tables */
@@ -1152,6 +1164,22 @@ function multiSelectionLogic<L extends number | Loc>(
   }
 }
 
+/**
+ * + Dsm - Dataset with state machine
+ *
+ * State can skip starting and submitting for direct execution,
+ * so no restriction on state changes during changeState().
+ * Restrictions on state changes are handled by events: start(), submit(), apply().
+ * Restrictions ensure events happen in the correct state flow.
+ * For example, submit() and apply() shouldn't be triggered before the mode is set or started,
+ * or while other states are processing.
+ *
+ * Mode and state transitions should be triggered through the library’s internal functions,
+ * not by external variable modifications.
+ * The state and mode variables are exposed to make the library more versatile,
+ * allowing it to work with different reactive syntax in front-end frameworks.
+ */
+
 export type DsMode = string;
 
 export enum DsState {
@@ -1168,151 +1196,300 @@ export const DsStateMap = new Map<number, string>(
   )
 );
 
-export interface DsModeConfig<T = any> {
-  applyHandler: () => Promise<{ success: boolean; data: T | null }>;
-  successHandler: (data?: T) => void;
-}
+export type HookApplied<D = any> = () => Promise<{
+  success: boolean;
+  data: D | null;
+}>;
+export type HookApplySuccess<D = any> = (data?: D) => void;
+export type HookApplyFail<D = any> = (data?: D) => void;
+export type HookModeChanged = (mode: { ex: string; now: string }) => void;
+export type HookStateChanged = (
+  mode: string,
+  state: { ex: DsState; now: DsState }
+) => void;
 
-export class Dss<T extends object> extends Ds<T> {
-  constructor(params: { core: DsCore<T>; useClone?: boolean }) {
-    super(params);
-    this.core.state = DsState.Normal;
-  }
+export type DsModeConfig<D = any> = {
+  // - Mode-specific hook function configuration
+  applied?: HookApplied<D>;
+  applySuccess?: HookApplySuccess<D>;
+  applyFail?: HookApplyFail<D>;
+  modeChanged?: HookModeChanged;
+  stateChanged?: HookStateChanged;
+};
 
+export type DsCommonHooks<D = any> = {
+  // - Common hook function configuration
+  modeChanged?: HookModeChanged;
+  stateChanged?: HookStateChanged;
+};
+
+/**
+ * Dsm - Dataset with state machine
+ *
+ * @export
+ * @class Dsm
+ * @extends {Ds<T extends object>}
+ * @template T
+ */
+export class Dsm<T extends object> extends Ds<T> {
+  #debug: boolean | undefined;
   #modes: Record<DsMode, DsModeConfig> = {};
-  #exState: DsState = DsState.Normal;
+  #modeEx: string = "idle";
+  #StateEx: DsState = DsState.Unknown;
+  #hooks: DsCommonHooks | undefined;
 
-  get currentState() {
-    return { mode: this.core.mode, state: this.core.state };
+  constructor(params: {
+    core: DsCore<T>;
+    useClone?: boolean;
+    hooks?: DsCommonHooks;
+    debug?: boolean;
+  }) {
+    super(params);
+    this.#debug = params.debug;
+    this.#hooks = params.hooks;
+    this.registerMode("idle", {});
+    this.#changeState(DsState.Normal);
+    this.#changeMode("Hey");
   }
 
-  registerMode<T>(mode: DsMode, config: DsModeConfig<T>) {
-    this.#modes[mode] = config;
+  /* ~ State machine transition */
+
+  #changeMode(mode: string): boolean {
+    if (!this.#modes[mode]) {
+      throw new Error(`Mode "${mode}" is not registered.`);
+    }
+
+    if (mode !== "idle" && this.core.state !== DsState.Normal) {
+      console.log("current status not in Normal state, cannot change mode");
+      return false;
+    }
+
+    // - change mode
+    this.#modeEx = this.core.mode ?? "idle";
+    this.core.mode = mode;
+
+    // - mode changed & exec hook function
+    this.#printMode();
+    this.#hooks?.modeChanged?.({ ex: this.#modeEx, now: mode });
+    this.#modes[mode].modeChanged?.({ ex: this.#modeEx, now: mode });
+
+    return true;
   }
 
-  // todo -------------------------------------------------
+  #changeState(state: DsState) {
+    // - change state
+    this.#StateEx = this.core.state ?? DsState.Unknown;
+    this.core.state = state;
 
-  /* ~ Normal */
+    // - execute hook
+    this.#hooks?.stateChanged?.(this.mode, { ex: this.#StateEx, now: state });
+    this.#modes[this.mode]?.stateChanged?.(this.mode, {
+      ex: this.#StateEx,
+      now: state,
+    });
+
+    this.#printState();
+
+    if (state === DsState.Normal) {
+      this.#changeMode("idle");
+    }
+  }
+
+  /* ~ debug use */
+
+  #printMode() {
+    if (this.#debug !== true) return;
+    console.debug(`Mode changed: ${this.#modeEx} > ${this.core.mode}`);
+  }
+
+  #printState() {
+    if (this.#debug !== true) return;
+    const mode = this.core.mode;
+    const exState = dsStateStr(this.#StateEx);
+    const nowState = dsStateStr(this.core.state);
+    console.debug(`${mode}: [${exState}] > [${nowState}]`);
+  }
+
+  /* ~ FSM Mode register */
+
+  registerMode<D>(mode: DsMode, config?: DsModeConfig<D>) {
+    if (this.#modes[mode]) {
+      throw new Error(`"${mode}" cannot register, mode dupicated`);
+    }
+    const validNameRegex = /^[a-zA-Z0-9_]+$/; // 正則表達式
+    if (!validNameRegex.test(mode)) {
+      throw new Error(
+        `"${mode}" not allowed. Only letters, numbers and underscores are accepted`
+      );
+    }
+    config ? (this.#modes[mode] = config) : this.#modes[mode];
+  }
+
+  /* ~ access attribute */
+  get modes() {
+    return this.#modes;
+  }
+
+  get mode(): string {
+    return this.core.mode ?? "unknown";
+  }
+
+  get state(): DsState {
+    return this.core.state ?? DsState.Unknown;
+  }
+
+  get status(): { mode: string; state: DsState } {
+    return {
+      mode: this.core.mode ?? "unknown",
+      state: this.core.state ?? DsState.Unknown,
+    };
+  }
+
+  get isNormal(): boolean {
+    return this.core.state === DsState.Normal;
+  }
+
+  get isStarting(): boolean {
+    return this.core.state === DsState.Starting;
+  }
+
+  get isSubmitting(): boolean {
+    return this.core.state === DsState.Submitting;
+  }
+
+  get isAppling(): boolean {
+    return this.core.state === DsState.Appling;
+  }
+
+  get busy(): boolean {
+    return this.core.state !== DsState.Normal;
+  }
+
+  isMode(mode: string): boolean {
+    return this.core.mode === mode;
+  }
+
+  isState(state: DsState): boolean {
+    return this.core.state === state;
+  }
+
+  isStatus(mode: string, state: DsState): boolean {
+    return this.core.mode === mode && this.core.state === state;
+  }
+
+  /* ~ */
+
+  /* ~ event */
 
   start(mode: DsMode, submitted?: boolean, confirmed?: boolean) {
-    if (this.#modes[mode] === undefined) {
-      console.log("Mode invalid, cannot Start");
-      return;
-    }
+    // - state: [Normal]
+
+    // - validate current state is Normal(non busy)
     if (this.core.state !== DsState.Normal) {
-      console.log("Not in Browse mode, cannot start");
+      console.log("Not in Normal mode, cannot goto Starting");
       return;
     }
 
-    this.core.mode = mode;
-    console.log("Mode:", this.currentState.mode);
+    // - change mode
+    const validMode = this.#changeMode(mode);
+    if (!validMode) return;
 
+    // - change state
     if (submitted) {
       if (confirmed) {
-        // - go Appling
-        this.core.state = DsState.Appling;
+        // - goto Appling
+        this.#changeState(DsState.Appling);
         this.#process();
       } else {
-        // - go Submitting
-        this.core.state = DsState.Submitting;
+        // - goto Submitting
+        this.#changeState(DsState.Submitting);
       }
     } else {
-      // - go Starting
-      this.core.state = DsState.Starting;
+      // - goto Starting
+      this.#changeState(DsState.Starting);
     }
   }
-
-  /* ~ Starting */
 
   submit(execute?: boolean, confirmed?: boolean) {
+    // - state: [Starting]
+
     if (this.core.state !== DsState.Starting) {
-      console.log("invalid state, cannot go submit");
+      console.log("invalid state, cannot goto Submitting");
       return;
     }
 
+    // - change state
     if (execute === false) {
-      // - back to Normal
-      this.core.state = DsState.Normal;
+      // - back to [Normal]
+      this.#changeState(DsState.Normal);
     } else {
+      // - quick submitted or applied
       if (confirmed) {
-        // - go Appling
-        this.core.state = DsState.Appling;
+        // - goto [Appling]
+        this.#changeState(DsState.Appling);
         this.#process();
       } else {
-        // - go submitting
-        this.core.state = DsState.Submitting;
+        // - goto [submitting]
+        this.#changeState(DsState.Submitting);
       }
     }
   }
 
-  /* ~ Submitting */
-
   apply(execute?: boolean) {
+    // - state: [Submitting]
+
     if (this.core.state !== DsState.Submitting) {
-      console.log("invalid state, cannot go submit");
+      console.log("invalid state, cannot goto Appling");
       return;
     }
 
+    // - change state
     if (execute === false) {
-      // - abort submit, back to Start
-      this.core.state = this.#exState; // check
+      // - abort submit
+      this.#changeState(this.#StateEx); // check
     } else {
-      // - go Appling
-      this.core.state = DsState.Appling;
+      // - goto [Appling]
+      this.#changeState(DsState.Appling);
       this.#process();
     }
   }
 
-  /* ~ Appling */
   #process() {
-    //
-    this.cl("#process()");
+    // - state: [Appling]
 
-    // this.#modes = {};
-
-    try {
-      // - try catch for mode undefined protection
-      this.#modes[this.core.mode!]
-        .applyHandler()
-        .then((r) => {
-          const { success, data } = r;
-
-          if (success) {
-            //
-            // this.#modes = {};
-            // - success: update to local data, go Normal
-            this.#modes[this.core.mode!].successHandler(data);
-            this.core.state = DsState.Normal;
-            this.cl("actionHandler()");
-            //
-          } else {
-            // - error: back to Start
-            this.core.state = this.#exState; // check
-            this.cl("actionHandler()");
-            //
-          }
-          //
-        })
-        .catch((error) => {
-          console.log(error);
-          this.core.state = this.#exState; // check
-        });
-    } catch (error) {
-      console.log(error);
-      this.core.state = this.#exState; // check
+    // - undefined object guard
+    const process = this.#modes[this.core.mode!]?.applied;
+    if (process === undefined) {
+      console.log(
+        "No applied() hook function config, no processing will be done"
+      );
+      console.log(`Mode config is: (${this.#modes[this.core.mode!]})`);
+      this.#changeState(DsState.Normal);
+      return;
     }
 
-    this.cl("Final  ");
-  }
+    process()
+      .then((r) => {
+        // - Promise resolve
+        const { success, data } = r;
 
-  cl(event: string) {
-    console.log(
-      `[ ${event} ] `,
-      "exState:",
-      dsStateStr(this.#exState),
-      "State:",
-      dsStateStr(this.currentState.state)
-    );
+        if (success) {
+          // - success: update to local data, goto Normal
+          this.#modes[this.core.mode!]?.applySuccess?.(data);
+          this.#changeState(DsState.Normal);
+          //
+        } else {
+          // - error: back to Start
+          this.#modes[this.core.mode!]?.applyFail?.(data);
+          this.#changeState(this.#StateEx); // check
+          //
+        }
+        //
+      })
+      .catch((error) => {
+        console.log(error);
+        this.#changeState(this.#StateEx); // check
+      });
   }
 }
 

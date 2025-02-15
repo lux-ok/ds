@@ -1,21 +1,35 @@
 import * as d from "./data";
-import { Dss, DssState, dssStateStr } from "../src";
-import type { DsCore, DssCore } from "../src";
+import { Dsm, DsState, dsStateStr } from "../src";
+import type { DsCore } from "../src";
 
-const dsCore: DsCore<d.MyType> = {
+console.clear();
+
+const core: DsCore<d.MyType> = {
   tables: [],
   tablesSel: [],
   rowsSel: [],
 };
 
-const dssCore: DssCore = {};
+const ds = new Dsm({
+  core,
+  // debug: true,
+  hooks: {
+    modeChanged: (mode) => {
+      console.log(`common hook -> Mode changed: (${mode.ex}) > (${mode.now})`);
+    },
+    stateChanged: (mode, state) => {
+      const stateEx = dsStateStr(state.ex);
+      const stateNow = dsStateStr(state.now);
+      console.log(
+        `common hook -> Mode changed: (${mode}) [${stateEx}] > [${stateNow}]`
+      );
+    },
+  },
+});
 
-const dss = new Dss<d.MyType>({ dsCore, dssCore });
-
-dss.registerMode("fetch", {
-  applyHandler: async () => {
-    console.log("Fetching data...");
-
+ds.registerMode("fetch", {
+  applied: async () => {
+    console.log("fetch hook -> applied(): Fetching data...");
     return new Promise<{ success: boolean; data: d.MyType[] | null }>(
       (resolve) => {
         setTimeout(() => {
@@ -24,21 +38,20 @@ dss.registerMode("fetch", {
       }
     );
   },
-
-  successHandler: (data) => {
-    console.log("Data fetched successfully:", data);
+  applySuccess: (data) => {
+    console.log("fetch hook -> applySuccess(): Data fetched successfully");
+    console.log(data);
   },
+  // modeChanged: () => console.log("Mode Changed Hook"),
+  // stateChanged: () => console.log("Stage Changed Hook"),
 });
 
-console.clear();
-dss.cl("");
+// console.log(ds.mode);
 
-dss.start("fetch", false, false);
-dss.cl("");
+// ds.start("fetch", false, false);
 
-dss.submit(true, false);
-dss.cl("");
+// ds.submit(true, false);
 
-dss.apply(false);
+// ds.apply(true);
 
-dss.cl("");
+// console.log(ds.status);
