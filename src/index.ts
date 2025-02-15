@@ -1249,7 +1249,6 @@ export class Dsm<T extends object> extends Ds<T> {
     this.#hooks = params.hooks;
     this.registerMode("idle", {});
     this.#changeState(DsState.Normal);
-    this.#changeMode("Hey");
   }
 
   /* ~ State machine transition */
