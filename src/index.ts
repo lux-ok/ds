@@ -1349,6 +1349,18 @@ export class Dsm<T extends object> extends Ds<T> {
   }
 
   /**
+   * state string attribute
+   *
+   * @readonly
+   * @type {string}
+   * @memberof Dsm
+   */
+  get stateStr(): string {
+    const state = this.core.state ?? DsState.Unknown;
+    return dsStateStr(state);
+  }
+
+  /**
    * {mode; state} attribute
    *
    * @readonly
