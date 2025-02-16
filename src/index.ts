@@ -1316,18 +1316,45 @@ export class Dsm<T extends object> extends Ds<T> {
   }
 
   /* ~ access attribute */
+  /**
+   * modesReg attribute
+   *
+   * @readonly
+   * @memberof Dsm
+   */
   get modesReg() {
     return this.#modesReg;
   }
 
+  /**
+   * mode attribute
+   *
+   * @readonly
+   * @type {string}
+   * @memberof Dsm
+   */
   get mode(): string {
     return this.core.mode ?? "init";
   }
 
+  /**
+   * state attribute
+   *
+   * @readonly
+   * @type {DsState}
+   * @memberof Dsm
+   */
   get state(): DsState {
     return this.core.state ?? DsState.Unknown;
   }
 
+  /**
+   * {mode; state} attribute
+   *
+   * @readonly
+   * @type {{ mode: string; state: DsState }}
+   * @memberof Dsm
+   */
   get status(): { mode: string; state: DsState } {
     return {
       mode: this.core.mode ?? "init",
@@ -1335,22 +1362,57 @@ export class Dsm<T extends object> extends Ds<T> {
     };
   }
 
+  /**
+   * Is Normal state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
   get isNormal(): boolean {
     return this.core.state === DsState.Normal;
   }
 
+  /**
+   * Is [Starting] state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
   get isStarting(): boolean {
     return this.core.state === DsState.Starting;
   }
 
+  /**
+   * Is [Submitting] state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
   get isSubmitting(): boolean {
     return this.core.state === DsState.Submitting;
   }
 
+  /**
+   * Is [Appling] state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
   get isAppling(): boolean {
     return this.core.state === DsState.Appling;
   }
 
+  /**
+   * Not [Normal] state, busy attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
   get busy(): boolean {
     return this.core.state !== DsState.Normal;
   }
