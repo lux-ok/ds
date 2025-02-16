@@ -885,6 +885,25 @@ export class Ds<T extends object> {
     });
   }
 
+  newRow(
+    source: T,
+    target?: {
+      select?: "tables" | "rows" | Tid[] | Loc[];
+      which?: "top" | "all" | "bottom";
+      place?: "above" | "below";
+      changeSel?: boolean;
+      useClone?: boolean;
+    }
+  ): { success: boolean } {
+    return this.rows([source], {
+      select: target?.select ?? "rows", // - default: rows
+      which: target?.which ?? "bottom", // - default: bottom
+      place: target?.place ?? "below", // - default: below
+      changeSel: target?.changeSel,
+      useClone: target?.useClone,
+    });
+  }
+
   /**
    * Delete multi tables
    *
@@ -914,38 +933,6 @@ export class Ds<T extends object> {
       select: target?.select ?? "tables", // - default: tables
       which: target?.which ?? "all", // - default: all
       place: "replace",
-      changeSel: target?.changeSel,
-      useClone: target?.useClone,
-    });
-  }
-
-  /**
-   * Delete multi rows
-   *
-   * @param {({
-   * 		select?: 'tables' | 'rows' | Tid[] | Loc[];
-   * 		which?: 'top' | 'all' | 'bottom';
-   * 		place?: 'above' | 'below';
-   * 		changeSel?: boolean;
-   * 		useClone?: boolean;
-   * 	})} [target]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
-   *
-   * params default: 'rows', 'all', 'below'
-   * - place will no effect when select 'rows' or Loc[]
-   */
-  delRows(target?: {
-    select?: "tables" | "rows" | Tid[] | Loc[];
-    which?: "top" | "all" | "bottom";
-    place?: "above" | "below";
-    changeSel?: boolean;
-    useClone?: boolean;
-  }): { success: boolean } {
-    return this.rows(undefined, {
-      select: target?.select ?? "rows", // - default: rows
-      which: target?.which ?? "all", // - default: all
-      place: target?.place ?? "below", // - default: below
       changeSel: target?.changeSel,
       useClone: target?.useClone,
     });
@@ -988,6 +975,38 @@ export class Ds<T extends object> {
     return this.rows(undefined, {
       select: [tid],
       place: "replace",
+      changeSel: target?.changeSel,
+      useClone: target?.useClone,
+    });
+  }
+
+  /**
+   * Delete multi rows
+   *
+   * @param {({
+   * 		select?: 'tables' | 'rows' | Tid[] | Loc[];
+   * 		which?: 'top' | 'all' | 'bottom';
+   * 		place?: 'above' | 'below';
+   * 		changeSel?: boolean;
+   * 		useClone?: boolean;
+   * 	})} [target]
+   * @return {*}  {{ success: boolean }}
+   * @memberof Ds
+   *
+   * params default: 'rows', 'all', 'below'
+   * - place will no effect when select 'rows' or Loc[]
+   */
+  delRows(target?: {
+    select?: "tables" | "rows" | Tid[] | Loc[];
+    which?: "top" | "all" | "bottom";
+    place?: "above" | "below";
+    changeSel?: boolean;
+    useClone?: boolean;
+  }): { success: boolean } {
+    return this.rows(undefined, {
+      select: target?.select ?? "rows", // - default: rows
+      which: target?.which ?? "all", // - default: all
+      place: target?.place ?? "below", // - default: below
       changeSel: target?.changeSel,
       useClone: target?.useClone,
     });
