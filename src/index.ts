@@ -626,10 +626,12 @@ export class Ds<T extends object> {
           (tids = select as Tid[])
         : (select as Loc[]).some((l) => !this.hasRow(l).found) ||
           (locs = select as Loc[]);
-    } else {
+    } else if (select === undefined) {
       // - new table issuse, can be no tids or locs, predefine push new table to above or below
       if (place === "newTableAbove") tids = [0];
       else if (place === "newTableBelow") tids = [tables.length - 1];
+    } else if (typeof select === "string") {
+      paramNotAllow(select, `undefined | "tables" | "rows" | Tid[] | Loc[]`);
     }
 
     // - [ which ] tables or rows are targeted when multi selected
@@ -682,8 +684,8 @@ export class Ds<T extends object> {
               this.#newSelRef.rows.push(tables[tid][rid + i]); // - new rowsSel
             });
             //
-          } else {
-            // - to new table (place === 'newTableAbove' || place === 'newTableBelow')
+          } else if (place === "newTableAbove" || place === "newTableBelow") {
+            // - to new table
 
             // - insert new table to below
             place === "newTableBelow" && (tid = tid + 1);
@@ -694,6 +696,11 @@ export class Ds<T extends object> {
               this.#newSelRef.rows.push(tables[tid][i]);
 
             //
+          } else {
+            paramNotAllow(
+              place,
+              `undefined | "newTableAbove" | "above" | "replace" | "below" | "newTableBelow"`
+            );
           }
 
           //
@@ -770,7 +777,7 @@ export class Ds<T extends object> {
 
   /**
    * Insert multi tables
-   * ! This function is not complete, will be update in the future
+   * ! newTables() function is not complete, will be update in the future
    *
    * @param {T[][]} source
    * @param {({
@@ -1053,15 +1060,28 @@ function whichSel<S extends Tid | Loc>(
   sortFn: (arr: S[]) => S[],
   which?: "top" | "all" | "bottom"
 ): S[] {
-  if (which === "top") {
+  if (which === undefined || which === "all") {
+    //
+    return sel;
+    //
+  } else if (which === "top") {
+    //
     const item = sortFn(sel).at(0);
     return item !== undefined ? [item] : [];
+    //
   } else if (which === "bottom") {
+    //
     const item = sortFn(sel).at(sel.length - 1);
     return item !== undefined ? [item] : [];
-  } else if (which === "all") {
-    return sel;
-  } else return sel;
+    //
+  } else {
+    paramNotAllow(which, `undefined | "top" | "all" | "bottom"`);
+    return [];
+  }
+}
+
+function paramNotAllow(param: string | undefined, allowedParams: string) {
+  throw new Error(`Param '${param}' not allow. Valid param: ${allowedParams} `);
 }
 
 function multiSelectionLogic<L extends number | Loc>(
@@ -1224,6 +1244,17 @@ export type DsCommonHooks<D = any> = {
 };
 
 /**
+ * State enum to string
+ *
+ * @export
+ * @param {DsState} [state]
+ * @return {*}  {*}
+ */
+export function dsStateStr(state?: DsState): any {
+  return DsStateMap.get(state ?? DsState.Unknown);
+}
+
+/**
  * Dsm - Dataset with state machine
  *
  * @export
@@ -1233,11 +1264,21 @@ export type DsCommonHooks<D = any> = {
  */
 export class Dsm<T extends object> extends Ds<T> {
   #debug: boolean | undefined;
-  #modes: Record<DsMode, DsModeConfig> = {};
-  #modeEx: string = "idle";
+  #modesReg: Record<DsMode, DsModeConfig> = {}; // - modes registry
+  #modeEx: string = "init";
   #StateEx: DsState = DsState.Unknown;
   #hooks: DsCommonHooks | undefined;
 
+  /**
+   * Creates an instance of Dsm.
+   * @param {{
+   *     core: DsCore<T>;
+   *     useClone?: boolean;
+   *     hooks?: DsCommonHooks;
+   *     debug?: boolean;
+   *   }} params
+   * @memberof Dsm
+   */
   constructor(params: {
     core: DsCore<T>;
     useClone?: boolean;
@@ -1251,30 +1292,329 @@ export class Dsm<T extends object> extends Ds<T> {
     this.#changeState(DsState.Normal);
   }
 
-  /* ~ State machine transition */
+  /* ~ FSM Mode register */
 
-  #changeMode(mode: string): boolean {
-    if (!this.#modes[mode]) {
-      throw new Error(`Mode "${mode}" is not registered.`);
+  /**
+   * Mode registration
+   *
+   * @template D
+   * @param {DsMode} mode
+   * @param {DsModeConfig<D>} [config]
+   * @memberof Dsm
+   */
+  registerMode<D>(mode: DsMode, config?: DsModeConfig<D>) {
+    if (this.#modesReg[mode]) {
+      throw new Error(`"${mode}" cannot register, mode dupicated`);
+    }
+    const validNameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!validNameRegex.test(mode)) {
+      throw new Error(
+        `"${mode}" not allowed. Only letters, numbers and underscores are accepted`
+      );
+    }
+    config ? (this.#modesReg[mode] = config) : this.#modesReg[mode];
+  }
+
+  /* ~ access attribute */
+  get modesReg() {
+    return this.#modesReg;
+  }
+
+  get mode(): string {
+    return this.core.mode ?? "init";
+  }
+
+  get state(): DsState {
+    return this.core.state ?? DsState.Unknown;
+  }
+
+  get status(): { mode: string; state: DsState } {
+    return {
+      mode: this.core.mode ?? "init",
+      state: this.core.state ?? DsState.Unknown,
+    };
+  }
+
+  get isNormal(): boolean {
+    return this.core.state === DsState.Normal;
+  }
+
+  get isStarting(): boolean {
+    return this.core.state === DsState.Starting;
+  }
+
+  get isSubmitting(): boolean {
+    return this.core.state === DsState.Submitting;
+  }
+
+  get isAppling(): boolean {
+    return this.core.state === DsState.Appling;
+  }
+
+  get busy(): boolean {
+    return this.core.state !== DsState.Normal;
+  }
+
+  /* ~ convenience function */
+
+  /**
+   * Mode comparator
+   *
+   * @param {string} mode
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  isMode(mode: string): boolean {
+    return this.core.mode === mode;
+  }
+
+  /**
+   * State comparator
+   *
+   * @param {DsState} state
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  isState(state: DsState): boolean {
+    return this.core.state === state;
+  }
+
+  /**
+   * Mode and State comparator
+   *
+   * @param {string} mode
+   * @param {DsState} state
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  is(mode: string, state: DsState): boolean {
+    return this.core.mode === mode && this.core.state === state;
+  }
+
+  /**
+   * Mode validator
+   *
+   * @param {string} mode
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  isValidMode(mode: string): boolean {
+    return this.#modesReg[mode] ? true : false;
+  }
+
+  /**
+   * get modes registry
+   *
+   * @param {string} [mode]
+   * @return {*}  {(DsModeConfig<any> | Record<string, DsModeConfig<any>> | undefined)}
+   * @memberof Dsm
+   */
+  getModesReg(
+    mode?: string
+  ): DsModeConfig<any> | Record<string, DsModeConfig<any>> | undefined {
+    if (mode === undefined) return this.#modesReg;
+    else return this.#modesReg[mode];
+  }
+
+  /* ~ event (state transition) */
+
+  /**
+   * Start specified mode
+   *
+   * No option: state transit to [Starting]
+   * option = "submitted": bypass [Starting],go direct to [Submitting]
+   * option = "applied": bypass [Starting] and [submitting], go direct to [Appling]
+   *
+   * @param {DsMode} mode
+   * @param {("submitted" | "applied")} [option]
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  start(mode: DsMode, option?: "submitted" | "applied"): boolean {
+    // - state: [Normal]
+
+    // - flow limiter
+    if (this.core.state !== DsState.Normal) {
+      // - validate current state is Normal(non busy)
+      console.log("Not in Normal mode, cannot goto Starting");
+      return false;
     }
 
+    // - change mode
+    const validMode = this.#changeMode(mode);
+    if (!validMode) return false;
+
+    // - change state
+    if (option === undefined) {
+      // - goto [Starting]
+      this.#changeState(DsState.Starting);
+      //
+    } else if (option === "submitted") {
+      // - bypass [starting], goto [Submitting]
+      this.#changeState(DsState.Submitting);
+      //
+    } else if (option === "applied") {
+      // - bypass [starting] & [submitting], goto [Appling]
+      this.#changeState(DsState.Appling);
+      this.#process();
+      //
+    } else {
+      // - for pure js
+      throw new Error("Unknown option");
+    }
+
+    return true;
+  }
+
+  /**
+   * Submit a request
+   *
+   * option = "canel": back to [Normal] state and reset mode to (idle)
+   * option = "applied": bypass [Submiting], go direct to [Appling]
+   *
+   * @param {("cancel" | "applied")} [option]
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  submit(option?: "cancel" | "applied"): boolean {
+    // - state: [Starting]
+
+    // - flow limiter
+    if (this.core.state !== DsState.Starting) {
+      console.log("invalid state, cannot goto Submitting");
+      return false;
+    }
+
+    // - change state
+    if (option === undefined) {
+      // - goto [submitting]
+      this.#changeState(DsState.Submitting);
+      //
+    } else if (option === "cancel") {
+      // - back to [Normal]
+      this.#changeState(DsState.Normal);
+      //
+    } else if (option === "applied") {
+      // - bypass [Submiting], goto [Appling]
+      this.#changeState(DsState.Appling);
+      this.#process();
+      //
+    } else {
+      // - for pure js
+      throw new Error("Unknown option");
+    }
+
+    return true;
+  }
+
+  /**
+   * Apply processing means [Submitting] confirmation and entering processing
+   *
+   * option = "cancel": abort submitting and back to previous state
+   *
+   * @param {"cancel"} [option]
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  apply(option?: "cancel"): boolean {
+    // - state: [Submitting]
+
+    // - flow limiter
+    if (this.core.state !== DsState.Submitting) {
+      console.log("invalid state, cannot goto Appling");
+      return false;
+    }
+
+    // - change state
+    if (option === undefined) {
+      // - goto [Appling]
+      this.#changeState(DsState.Appling);
+      return this.#process();
+      //
+    } else if (option === "cancel") {
+      // - back previous state
+      this.#changeState(this.#StateEx); // check
+      return true;
+      //
+    } else {
+      // - for pure js
+      throw new Error("Unknown option");
+    }
+  }
+
+  /**
+   * FSM flow end point, final processing
+   */
+  #process(): boolean {
+    // - state: [Appling]
+
+    // - undefined object guard
+    const process = this.#modesReg[this.core.mode!]?.applied;
+    if (process === undefined) {
+      console.log(
+        "No applied() hook function config, no processing will be done"
+      );
+      console.log(`Mode config is: (${this.#modesReg[this.core.mode!]})`);
+      this.#changeState(DsState.Normal);
+      return false;
+    }
+
+    process()
+      .then((r) => {
+        // - Promise resolve
+        const { success, data } = r;
+
+        if (success) {
+          // - success: update to local data, goto Normal
+          this.#modesReg[this.core.mode!]?.applySuccess?.(data);
+          this.#changeState(DsState.Normal);
+          //
+        } else {
+          // - error: back to Start
+          this.#modesReg[this.core.mode!]?.applyFail?.(data);
+          this.#changeState(this.#StateEx); // check
+          //
+        }
+        //
+      })
+      .catch((error) => {
+        console.log(error);
+        this.#changeState(this.#StateEx); // check
+      });
+
+    return true;
+  }
+
+  /* ~ State machine transition */
+
+  /**
+   * Mode transition
+   */
+  #changeMode(mode: string): boolean {
+    if (!this.isValidMode(mode))
+      throw new Error(`Mode "${mode}" is not registered.`);
+
+    // - flow limiter
     if (mode !== "idle" && this.core.state !== DsState.Normal) {
       console.log("current status not in Normal state, cannot change mode");
       return false;
     }
 
     // - change mode
-    this.#modeEx = this.core.mode ?? "idle";
+    this.#modeEx = this.core.mode ?? "init";
     this.core.mode = mode;
 
     // - mode changed & exec hook function
     this.#printMode();
     this.#hooks?.modeChanged?.({ ex: this.#modeEx, now: mode });
-    this.#modes[mode].modeChanged?.({ ex: this.#modeEx, now: mode });
+    this.#modesReg[mode].modeChanged?.({ ex: this.#modeEx, now: mode });
 
     return true;
   }
 
+  /**
+   * State transition
+   */
   #changeState(state: DsState) {
     // - change state
     this.#StateEx = this.core.state ?? DsState.Unknown;
@@ -1282,7 +1622,7 @@ export class Dsm<T extends object> extends Ds<T> {
 
     // - execute hook
     this.#hooks?.stateChanged?.(this.mode, { ex: this.#StateEx, now: state });
-    this.#modes[this.mode]?.stateChanged?.(this.mode, {
+    this.#modesReg[this.mode]?.stateChanged?.(this.mode, {
       ex: this.#StateEx,
       now: state,
     });
@@ -1308,190 +1648,4 @@ export class Dsm<T extends object> extends Ds<T> {
     const nowState = dsStateStr(this.core.state);
     console.debug(`${mode}: [${exState}] > [${nowState}]`);
   }
-
-  /* ~ FSM Mode register */
-
-  registerMode<D>(mode: DsMode, config?: DsModeConfig<D>) {
-    if (this.#modes[mode]) {
-      throw new Error(`"${mode}" cannot register, mode dupicated`);
-    }
-    const validNameRegex = /^[a-zA-Z0-9_]+$/; // 正則表達式
-    if (!validNameRegex.test(mode)) {
-      throw new Error(
-        `"${mode}" not allowed. Only letters, numbers and underscores are accepted`
-      );
-    }
-    config ? (this.#modes[mode] = config) : this.#modes[mode];
-  }
-
-  /* ~ access attribute */
-  get modes() {
-    return this.#modes;
-  }
-
-  get mode(): string {
-    return this.core.mode ?? "unknown";
-  }
-
-  get state(): DsState {
-    return this.core.state ?? DsState.Unknown;
-  }
-
-  get status(): { mode: string; state: DsState } {
-    return {
-      mode: this.core.mode ?? "unknown",
-      state: this.core.state ?? DsState.Unknown,
-    };
-  }
-
-  get isNormal(): boolean {
-    return this.core.state === DsState.Normal;
-  }
-
-  get isStarting(): boolean {
-    return this.core.state === DsState.Starting;
-  }
-
-  get isSubmitting(): boolean {
-    return this.core.state === DsState.Submitting;
-  }
-
-  get isAppling(): boolean {
-    return this.core.state === DsState.Appling;
-  }
-
-  get busy(): boolean {
-    return this.core.state !== DsState.Normal;
-  }
-
-  isMode(mode: string): boolean {
-    return this.core.mode === mode;
-  }
-
-  isState(state: DsState): boolean {
-    return this.core.state === state;
-  }
-
-  isStatus(mode: string, state: DsState): boolean {
-    return this.core.mode === mode && this.core.state === state;
-  }
-
-  /* ~ */
-
-  /* ~ event */
-
-  start(mode: DsMode, submitted?: boolean, confirmed?: boolean) {
-    // - state: [Normal]
-
-    // - validate current state is Normal(non busy)
-    if (this.core.state !== DsState.Normal) {
-      console.log("Not in Normal mode, cannot goto Starting");
-      return;
-    }
-
-    // - change mode
-    const validMode = this.#changeMode(mode);
-    if (!validMode) return;
-
-    // - change state
-    if (submitted) {
-      if (confirmed) {
-        // - goto Appling
-        this.#changeState(DsState.Appling);
-        this.#process();
-      } else {
-        // - goto Submitting
-        this.#changeState(DsState.Submitting);
-      }
-    } else {
-      // - goto Starting
-      this.#changeState(DsState.Starting);
-    }
-  }
-
-  submit(execute?: boolean, confirmed?: boolean) {
-    // - state: [Starting]
-
-    if (this.core.state !== DsState.Starting) {
-      console.log("invalid state, cannot goto Submitting");
-      return;
-    }
-
-    // - change state
-    if (execute === false) {
-      // - back to [Normal]
-      this.#changeState(DsState.Normal);
-    } else {
-      // - quick submitted or applied
-      if (confirmed) {
-        // - goto [Appling]
-        this.#changeState(DsState.Appling);
-        this.#process();
-      } else {
-        // - goto [submitting]
-        this.#changeState(DsState.Submitting);
-      }
-    }
-  }
-
-  apply(execute?: boolean) {
-    // - state: [Submitting]
-
-    if (this.core.state !== DsState.Submitting) {
-      console.log("invalid state, cannot goto Appling");
-      return;
-    }
-
-    // - change state
-    if (execute === false) {
-      // - abort submit
-      this.#changeState(this.#StateEx); // check
-    } else {
-      // - goto [Appling]
-      this.#changeState(DsState.Appling);
-      this.#process();
-    }
-  }
-
-  #process() {
-    // - state: [Appling]
-
-    // - undefined object guard
-    const process = this.#modes[this.core.mode!]?.applied;
-    if (process === undefined) {
-      console.log(
-        "No applied() hook function config, no processing will be done"
-      );
-      console.log(`Mode config is: (${this.#modes[this.core.mode!]})`);
-      this.#changeState(DsState.Normal);
-      return;
-    }
-
-    process()
-      .then((r) => {
-        // - Promise resolve
-        const { success, data } = r;
-
-        if (success) {
-          // - success: update to local data, goto Normal
-          this.#modes[this.core.mode!]?.applySuccess?.(data);
-          this.#changeState(DsState.Normal);
-          //
-        } else {
-          // - error: back to Start
-          this.#modes[this.core.mode!]?.applyFail?.(data);
-          this.#changeState(this.#StateEx); // check
-          //
-        }
-        //
-      })
-      .catch((error) => {
-        console.log(error);
-        this.#changeState(this.#StateEx); // check
-      });
-  }
-}
-
-export function dsStateStr(state?: DsState) {
-  return DsStateMap.get(state ?? DsState.Unknown);
 }

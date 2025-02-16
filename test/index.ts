@@ -21,7 +21,7 @@ const ds = new Dsm({
       const stateEx = dsStateStr(state.ex);
       const stateNow = dsStateStr(state.now);
       console.log(
-        `common hook -> Mode changed: (${mode}) [${stateEx}] > [${stateNow}]`
+        `common hook -> State changed: (${mode}) [${stateEx}] > [${stateNow}]`
       );
     },
   },
@@ -48,10 +48,17 @@ ds.registerMode("fetch", {
 
 // console.log(ds.mode);
 
-// ds.start("fetch", false, false);
-
-// ds.submit(true, false);
-
-// ds.apply(true);
+ds.start("fetch");
+ds.submit("cancel");
+ds.start("fetch");
+ds.submit();
+ds.apply("cancel");
+ds.submit();
+ds.apply();
 
 // console.log(ds.status);
+
+//
+// console.log(ds.isValidMode("fetch"));
+// console.log(ds.isValidMode(""));
+// console.log(ds.getModesReg());
