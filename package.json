@@ -5,7 +5,8 @@
   "author": "Thomas Choi",
   "license": "MIT",
   "keywords": [
-    "js",
+    "javascript",
+    "typescript",
     "npm",
     "generic dataset",
     "generic data tables",
@@ -14,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/thomaschoi721/ds.git"
+    "url": "git+https://github.com/thomaschoi721/ds.git"
   },
   "scripts": {
     "build": "bunx rimraf dist && bunx tsc --project tsconfig.json",
