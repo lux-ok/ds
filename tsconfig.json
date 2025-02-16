@@ -20,5 +20,6 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "removeComments": false
-  }
+  },
+  "files": ["src/index.ts"]
 }

@@ -1,7 +1,9 @@
 export interface DsCore<T extends object> {
   tables: T[][];
-  tablesSel: number[];
+  tablesSel: Tid[];
   rowsSel: Loc[];
+  mode?: DsMode;
+  state?: DsState;
 }
 
 export type MultiMode = "ctrl" | "shift" | undefined;
@@ -16,28 +18,31 @@ export type Tid = number;
  * @export
  * @class Ds
  * @template T
+ * @template {object} T
  */
 export class Ds<T extends object> {
   /**
    * Creates an instance of Ds.
-   * @param {{ core: DsCore<T>; useClone?: boolean }} params
+   * @param {{ dsCore: DsCore<T>; useClone?: boolean }} params
    * @memberof Ds
    */
   constructor(params: { core: DsCore<T>; useClone?: boolean }) {
-    this.#core = params.core;
+    this.core = params.core;
     this.#useClone = params.useClone ?? true; // - default use structureClone()
+    console.log("Ds Version:", this.#version);
   }
 
   /* ~ private vars */
 
-  #core: DsCore<T>;
+  protected core: DsCore<T>;
+  #version = "0.1.1";
   #useClone?: boolean;
   #oldSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
   #newSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
 
   /* ~ private utils */
 
-  #log(msg: string, func?: string) {
+  protected log(msg: string, func?: string) {
     console.log(func ? func + ": " + msg : msg);
   }
 
@@ -45,22 +50,32 @@ export class Ds<T extends object> {
     const buf: T[][] = changeSel
       ? this.#newSelRef.tables
       : this.#oldSelRef.tables;
-    this.#core.tablesSel.length = 0;
+    this.core.tablesSel.length = 0;
     buf.forEach((table) => {
       const { found, tid: t } = this.hasTableRef(table);
-      found && this.#core.tablesSel.push(t);
+      found && this.core.tablesSel.push(t);
     });
     buf.length = 0;
   }
 
   #updateRowSel(changeSel?: boolean) {
     const buf: T[] = changeSel ? this.#newSelRef.rows : this.#oldSelRef.rows;
-    this.#core.rowsSel.length = 0;
+    this.core.rowsSel.length = 0;
     buf.forEach((row) => {
       const { found, loc } = this.hasRowRef(row);
-      found && this.#core.rowsSel.push(loc);
+      found && this.core.rowsSel.push(loc);
     });
     buf.length = 0;
+  }
+
+  /**
+   * Print this library version
+   *
+   * @readonly
+   * @memberof Ds
+   */
+  get version() {
+    return this.#version;
   }
 
   /* ~ tables */
@@ -73,7 +88,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tables(): T[][] {
-    return this.#core.tables;
+    return this.core.tables;
   }
 
   /**
@@ -84,7 +99,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tablesCnt(): number {
-    return this.#core.tables.length;
+    return this.core.tables.length;
   }
 
   /* ~ tablesSel */
@@ -96,7 +111,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tablesSel() {
-    return this.#core.tablesSel;
+    return this.core.tablesSel;
   }
 
   /**
@@ -106,7 +121,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tablesSelRef() {
-    return this.#core.tablesSel.map((loc) => this.#core.tables[loc]);
+    return this.core.tablesSel.map((loc) => this.core.tables[loc]);
   }
 
   /* ~ rowsSel */
@@ -118,7 +133,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowsSel() {
-    return this.#core.rowsSel;
+    return this.core.rowsSel;
   }
 
   /**
@@ -128,7 +143,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowsSelRef() {
-    return this.#core.rowsSel.map((loc) => this.#core.tables[loc.t][loc.r]);
+    return this.core.rowsSel.map((loc) => this.core.tables[loc.t][loc.r]);
   }
 
   /* ~ table0 (single table case) */
@@ -140,7 +155,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get table(): T[] | undefined {
-    return this.#core.tables[0];
+    return this.core.tables[0];
   }
 
   /**
@@ -151,7 +166,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowCnt(): number | undefined {
-    return this.#core.tables[0]?.length;
+    return this.core.tables[0]?.length;
   }
 
   /* ~ get tableSel[0] & tableSel[0] Reference, (single selection case)  */
@@ -164,8 +179,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tableSel(): number | undefined {
-    return this.#core.tablesSel.length === 1
-      ? this.#core.tablesSel[0]
+    return this.core.tablesSel.length === 1
+      ? this.core.tablesSel[0]
       : undefined;
   }
 
@@ -177,8 +192,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get tableSelRef(): T[] {
-    return this.#core.tablesSel.length === 1
-      ? this.#core.tables[this.#core.tablesSel[0]]
+    return this.core.tablesSel.length === 1
+      ? this.core.tables[this.core.tablesSel[0]]
       : [];
   }
 
@@ -192,8 +207,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowSel(): Loc | undefined {
-    return this.#core.rowsSel.length === 1
-      ? { t: this.#core.rowsSel[0].t, r: this.#core.rowsSel[0].r }
+    return this.core.rowsSel.length === 1
+      ? { t: this.core.rowsSel[0].t, r: this.core.rowsSel[0].r }
       : undefined;
   }
 
@@ -205,8 +220,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   get rowSelRef(): T | undefined {
-    return this.#core.rowsSel.length === 1
-      ? this.#core.tables[this.#core.rowsSel[0].t][this.#core.rowsSel[0].r]
+    return this.core.rowsSel.length === 1
+      ? this.core.tables[this.core.rowsSel[0].t][this.core.rowsSel[0].r]
       : undefined;
   }
 
@@ -220,7 +235,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasTable(t: number): { found: boolean; tableRef: T[] | undefined } {
-    const tableRef = this.#core.tables[t];
+    const tableRef = this.core.tables[t];
     return { found: tableRef !== undefined, tableRef };
   }
 
@@ -232,7 +247,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasRow(loc: Loc): { found: boolean; rowRef: T | undefined } {
-    const rowRef = this.#core.tables[loc.t]?.[loc.r];
+    const rowRef = this.core.tables[loc.t]?.[loc.r];
     return { found: rowRef !== undefined, rowRef };
   }
 
@@ -246,7 +261,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasTableRef(tableRef: T[]): { found: boolean; tid: number } {
-    const tid = this.#core.tables.indexOf(tableRef);
+    const tid = this.core.tables.indexOf(tableRef);
     return { found: tid > -1, tid };
   }
 
@@ -258,10 +273,10 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   hasRowRef(rowRef: T): { found: boolean; loc: Loc; row?: T } {
-    for (let t = 0; t < this.#core.tables.length; t++) {
-      let r = this.#core.tables[t].indexOf(rowRef);
+    for (let t = 0; t < this.core.tables.length; t++) {
+      let r = this.core.tables[t].indexOf(rowRef);
       if (r !== -1)
-        return { found: true, loc: { t, r }, row: this.#core.tables[t]?.[r] };
+        return { found: true, loc: { t, r }, row: this.core.tables[t]?.[r] };
     }
     return { found: false, loc: { t: -1, r: -1 } };
   }
@@ -311,7 +326,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   sortTablesSel(direction?: "forward" | "reverse") {
-    this.#core.tablesSel.sort((a, b) =>
+    this.core.tablesSel.sort((a, b) =>
       direction === "reverse" ? b - a : a - b
     );
   }
@@ -323,7 +338,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   sortRowsSel(direction?: "forward" | "reverse") {
-    this.#core.rowsSel.sort((a, b) => {
+    this.core.rowsSel.sort((a, b) => {
       if (a.t === b.t) return direction === "reverse" ? b.r - a.r : a.r - b.r;
       return direction === "reverse" ? b.t - a.t : a.t - b.t;
     });
@@ -355,7 +370,7 @@ export class Ds<T extends object> {
     }
 
     if (success) {
-      multiSelectionLogic(loc, this.#core.tablesSel, option?.mode);
+      multiSelectionLogic(loc, this.core.tablesSel, option?.mode);
       option?.sort && this.sortTablesSel(option.sort);
     }
 
@@ -386,7 +401,7 @@ export class Ds<T extends object> {
     }
 
     if (success) {
-      multiSelectionLogic(loc, this.#core.rowsSel, option?.mode);
+      multiSelectionLogic(loc, this.core.rowsSel, option?.mode);
       option?.sort && this.sortRowsSel(option.sort);
     }
 
@@ -449,7 +464,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   deselectAllTable() {
-    this.#core.tablesSel.length = 0;
+    this.core.tablesSel.length = 0;
   }
 
   /**
@@ -458,7 +473,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   deselectAllRow() {
-    this.#core.rowsSel.length = 0;
+    this.core.rowsSel.length = 0;
   }
 
   /**
@@ -467,8 +482,8 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   deselectAll() {
-    this.#core.rowsSel.length = 0;
-    this.#core.tablesSel.length = 0;
+    this.core.rowsSel.length = 0;
+    this.core.tablesSel.length = 0;
   }
 
   /* ~ isSelected */
@@ -479,7 +494,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   isSelectedTable(t: number): boolean {
-    return this.#core.tablesSel.includes(t);
+    return this.core.tablesSel.includes(t);
   }
 
   /**
@@ -488,7 +503,7 @@ export class Ds<T extends object> {
    * @memberof Ds
    */
   isSelectedRow(loc: Loc): boolean {
-    return this.#core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
+    return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
   /**
@@ -498,7 +513,7 @@ export class Ds<T extends object> {
    */
   isSelectedTableRef(tableRef: T[]): boolean {
     const { tid: t } = this.hasTableRef(tableRef);
-    return this.#core.tablesSel.includes(t);
+    return this.core.tablesSel.includes(t);
   }
 
   /**
@@ -508,7 +523,7 @@ export class Ds<T extends object> {
    */
   isSelectedRowRef(rowRef: T): boolean {
     const { loc } = this.hasRowRef(rowRef);
-    return this.#core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
+    return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
   /**
@@ -589,7 +604,7 @@ export class Ds<T extends object> {
       useClone?: boolean;
     }
   ): { success: boolean } {
-    const { tables, tablesSel, rowsSel } = this.#core;
+    const { tables, tablesSel, rowsSel } = this.core;
 
     // - default value when params undefined
     const select = target?.select;
@@ -611,10 +626,12 @@ export class Ds<T extends object> {
           (tids = select as Tid[])
         : (select as Loc[]).some((l) => !this.hasRow(l).found) ||
           (locs = select as Loc[]);
-    } else {
+    } else if (select === undefined) {
       // - new table issuse, can be no tids or locs, predefine push new table to above or below
       if (place === "newTableAbove") tids = [0];
       else if (place === "newTableBelow") tids = [tables.length - 1];
+    } else if (typeof select === "string") {
+      paramNotAllow(select, `undefined | "tables" | "rows" | Tid[] | Loc[]`);
     }
 
     // - [ which ] tables or rows are targeted when multi selected
@@ -667,8 +684,8 @@ export class Ds<T extends object> {
               this.#newSelRef.rows.push(tables[tid][rid + i]); // - new rowsSel
             });
             //
-          } else {
-            // - to new table (place === 'newTableAbove' || place === 'newTableBelow')
+          } else if (place === "newTableAbove" || place === "newTableBelow") {
+            // - to new table
 
             // - insert new table to below
             place === "newTableBelow" && (tid = tid + 1);
@@ -679,6 +696,11 @@ export class Ds<T extends object> {
               this.#newSelRef.rows.push(tables[tid][i]);
 
             //
+          } else {
+            paramNotAllow(
+              place,
+              `undefined | "newTableAbove" | "above" | "replace" | "below" | "newTableBelow"`
+            );
           }
 
           //
@@ -755,7 +777,7 @@ export class Ds<T extends object> {
 
   /**
    * Insert multi tables
-   * ! This function is not complete, will be update in the future
+   * ! newTables() function is not complete, will be update in the future
    *
    * @param {T[][]} source
    * @param {({
@@ -1038,15 +1060,28 @@ function whichSel<S extends Tid | Loc>(
   sortFn: (arr: S[]) => S[],
   which?: "top" | "all" | "bottom"
 ): S[] {
-  if (which === "top") {
+  if (which === undefined || which === "all") {
+    //
+    return sel;
+    //
+  } else if (which === "top") {
+    //
     const item = sortFn(sel).at(0);
     return item !== undefined ? [item] : [];
+    //
   } else if (which === "bottom") {
+    //
     const item = sortFn(sel).at(sel.length - 1);
     return item !== undefined ? [item] : [];
-  } else if (which === "all") {
-    return sel;
-  } else return sel;
+    //
+  } else {
+    paramNotAllow(which, `undefined | "top" | "all" | "bottom"`);
+    return [];
+  }
+}
+
+function paramNotAllow(param: string | undefined, allowedParams: string) {
+  throw new Error(`Param '${param}' not allow. Valid param: ${allowedParams} `);
 }
 
 function multiSelectionLogic<L extends number | Loc>(
@@ -1146,5 +1181,533 @@ function multiSelectionLogic<L extends number | Loc>(
       }
     }
     //
+  }
+}
+
+/**
+ * + Dsm - Dataset with state machine
+ *
+ * State can skip starting and submitting for direct execution,
+ * so no restriction on state changes during changeState().
+ * Restrictions on state changes are handled by events: start(), submit(), apply().
+ * Restrictions ensure events happen in the correct state flow.
+ * For example, submit() and apply() shouldn't be triggered before the mode is set or started,
+ * or while other states are processing.
+ *
+ * Mode and state transitions should be triggered through the library’s internal functions,
+ * not by external variable modifications.
+ * The state and mode variables are exposed to make the library more versatile,
+ * allowing it to work with different reactive syntax in front-end frameworks.
+ */
+
+export type DsMode = string;
+
+export enum DsState {
+  Unknown = -1,
+  Normal = 0,
+  Starting = 1,
+  Submitting = 2,
+  Appling = 3,
+}
+
+export const DsStateMap = new Map<number, string>(
+  Object.entries(DsState).map(
+    ([key, value]) => [value, key] as [DsState, string]
+  )
+);
+
+export type HookApplied<D = any> = () => Promise<{
+  success: boolean;
+  data: D | null;
+}>;
+export type HookApplySuccess<D = any> = (data?: D) => void;
+export type HookApplyFail<D = any> = (data?: D) => void;
+export type HookModeChanged = (mode: { ex: string; now: string }) => void;
+export type HookStateChanged = (
+  mode: string,
+  state: { ex: DsState; now: DsState }
+) => void;
+
+export type DsModeConfig<D = any> = {
+  // - Mode-specific hook function configuration
+  applied?: HookApplied<D>;
+  applySuccess?: HookApplySuccess<D>;
+  applyFail?: HookApplyFail<D>;
+  modeChanged?: HookModeChanged;
+  stateChanged?: HookStateChanged;
+};
+
+export type DsCommonHooks<D = any> = {
+  // - Common hook function configuration
+  modeChanged?: HookModeChanged;
+  stateChanged?: HookStateChanged;
+};
+
+/**
+ * State enum to string
+ *
+ * @export
+ * @param {DsState} [state]
+ * @return {*}  {*}
+ */
+export function dsStateStr(state?: DsState): any {
+  return DsStateMap.get(state ?? DsState.Unknown);
+}
+
+/**
+ * Dsm - Dataset with state machine
+ *
+ * @export
+ * @class Dsm
+ * @extends {Ds<T extends object>}
+ * @template T
+ */
+export class Dsm<T extends object> extends Ds<T> {
+  #debug: boolean | undefined;
+  #modesReg: Record<DsMode, DsModeConfig> = {}; // - modes registry
+  #modeEx: string = "init";
+  #StateEx: DsState = DsState.Unknown;
+  #hooks: DsCommonHooks | undefined;
+
+  /**
+   * Creates an instance of Dsm.
+   * @param {{
+   *     core: DsCore<T>;
+   *     useClone?: boolean;
+   *     hooks?: DsCommonHooks;
+   *     debug?: boolean;
+   *   }} params
+   * @memberof Dsm
+   */
+  constructor(params: {
+    core: DsCore<T>;
+    useClone?: boolean;
+    hooks?: DsCommonHooks;
+    debug?: boolean;
+  }) {
+    super(params);
+    this.#debug = params.debug;
+    this.#hooks = params.hooks;
+    this.registerMode("idle", {});
+    this.#changeState(DsState.Normal);
+  }
+
+  /* ~ FSM Mode register */
+
+  /**
+   * Mode registration
+   *
+   * @template D
+   * @param {DsMode} mode
+   * @param {DsModeConfig<D>} [config]
+   * @memberof Dsm
+   */
+  registerMode<D>(mode: DsMode, config?: DsModeConfig<D>) {
+    if (this.#modesReg[mode]) {
+      throw new Error(`"${mode}" cannot register, mode dupicated`);
+    }
+    const validNameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!validNameRegex.test(mode)) {
+      throw new Error(
+        `"${mode}" not allowed. Only letters, numbers and underscores are accepted`
+      );
+    }
+    config ? (this.#modesReg[mode] = config) : this.#modesReg[mode];
+  }
+
+  /* ~ access attribute */
+  /**
+   * modesReg attribute
+   *
+   * @readonly
+   * @memberof Dsm
+   */
+  get modesReg() {
+    return this.#modesReg;
+  }
+
+  /**
+   * mode attribute
+   *
+   * @readonly
+   * @type {string}
+   * @memberof Dsm
+   */
+  get mode(): string {
+    return this.core.mode ?? "init";
+  }
+
+  /**
+   * state attribute
+   *
+   * @readonly
+   * @type {DsState}
+   * @memberof Dsm
+   */
+  get state(): DsState {
+    return this.core.state ?? DsState.Unknown;
+  }
+
+  /**
+   * {mode; state} attribute
+   *
+   * @readonly
+   * @type {{ mode: string; state: DsState }}
+   * @memberof Dsm
+   */
+  get status(): { mode: string; state: DsState } {
+    return {
+      mode: this.core.mode ?? "init",
+      state: this.core.state ?? DsState.Unknown,
+    };
+  }
+
+  /**
+   * Is Normal state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
+  get isNormal(): boolean {
+    return this.core.state === DsState.Normal;
+  }
+
+  /**
+   * Is [Starting] state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
+  get isStarting(): boolean {
+    return this.core.state === DsState.Starting;
+  }
+
+  /**
+   * Is [Submitting] state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
+  get isSubmitting(): boolean {
+    return this.core.state === DsState.Submitting;
+  }
+
+  /**
+   * Is [Appling] state attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
+  get isAppling(): boolean {
+    return this.core.state === DsState.Appling;
+  }
+
+  /**
+   * Not [Normal] state, busy attribute
+   *
+   * @readonly
+   * @type {boolean}
+   * @memberof Dsm
+   */
+  get busy(): boolean {
+    return this.core.state !== DsState.Normal;
+  }
+
+  /* ~ convenience function */
+
+  /**
+   * Mode comparator
+   *
+   * @param {string} mode
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  isMode(mode: string): boolean {
+    return this.core.mode === mode;
+  }
+
+  /**
+   * State comparator
+   *
+   * @param {DsState} state
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  isState(state: DsState): boolean {
+    return this.core.state === state;
+  }
+
+  /**
+   * Mode and State comparator
+   *
+   * @param {string} mode
+   * @param {DsState} state
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  is(mode: string, state: DsState): boolean {
+    return this.core.mode === mode && this.core.state === state;
+  }
+
+  /**
+   * Mode validator
+   *
+   * @param {string} mode
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  isValidMode(mode: string): boolean {
+    return this.#modesReg[mode] ? true : false;
+  }
+
+  /**
+   * get modes registry
+   *
+   * @param {string} [mode]
+   * @return {*}  {(DsModeConfig<any> | Record<string, DsModeConfig<any>> | undefined)}
+   * @memberof Dsm
+   */
+  getModesReg(
+    mode?: string
+  ): DsModeConfig<any> | Record<string, DsModeConfig<any>> | undefined {
+    if (mode === undefined) return this.#modesReg;
+    else return this.#modesReg[mode];
+  }
+
+  /* ~ event (state transition) */
+
+  /**
+   * Start specified mode
+   *
+   * No option: state transit to [Starting]
+   * option = "submitted": bypass [Starting],go direct to [Submitting]
+   * option = "applied": bypass [Starting] and [submitting], go direct to [Appling]
+   *
+   * @param {DsMode} mode
+   * @param {("submitted" | "applied")} [option]
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  start(mode: DsMode, option?: "submitted" | "applied"): boolean {
+    // - state: [Normal]
+
+    // - flow limiter
+    if (this.core.state !== DsState.Normal) {
+      // - validate current state is Normal(non busy)
+      console.log("Not in Normal mode, cannot goto Starting");
+      return false;
+    }
+
+    // - change mode
+    const validMode = this.#changeMode(mode);
+    if (!validMode) return false;
+
+    // - change state
+    if (option === undefined) {
+      // - goto [Starting]
+      this.#changeState(DsState.Starting);
+      //
+    } else if (option === "submitted") {
+      // - bypass [starting], goto [Submitting]
+      this.#changeState(DsState.Submitting);
+      //
+    } else if (option === "applied") {
+      // - bypass [starting] & [submitting], goto [Appling]
+      this.#changeState(DsState.Appling);
+      this.#process();
+      //
+    } else {
+      // - for pure js
+      throw new Error("Unknown option");
+    }
+
+    return true;
+  }
+
+  /**
+   * Submit a request
+   *
+   * option = "canel": back to [Normal] state and reset mode to (idle)
+   * option = "applied": bypass [Submiting], go direct to [Appling]
+   *
+   * @param {("cancel" | "applied")} [option]
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  submit(option?: "cancel" | "applied"): boolean {
+    // - state: [Starting]
+
+    // - flow limiter
+    if (this.core.state !== DsState.Starting) {
+      console.log("invalid state, cannot goto Submitting");
+      return false;
+    }
+
+    // - change state
+    if (option === undefined) {
+      // - goto [submitting]
+      this.#changeState(DsState.Submitting);
+      //
+    } else if (option === "cancel") {
+      // - back to [Normal]
+      this.#changeState(DsState.Normal);
+      //
+    } else if (option === "applied") {
+      // - bypass [Submiting], goto [Appling]
+      this.#changeState(DsState.Appling);
+      this.#process();
+      //
+    } else {
+      // - for pure js
+      throw new Error("Unknown option");
+    }
+
+    return true;
+  }
+
+  /**
+   * Apply processing means [Submitting] confirmation and entering processing
+   *
+   * option = "cancel": abort submitting and back to previous state
+   *
+   * @param {"cancel"} [option]
+   * @return {*}  {boolean}
+   * @memberof Dsm
+   */
+  apply(option?: "cancel"): boolean {
+    // - state: [Submitting]
+
+    // - flow limiter
+    if (this.core.state !== DsState.Submitting) {
+      console.log("invalid state, cannot goto Appling");
+      return false;
+    }
+
+    // - change state
+    if (option === undefined) {
+      // - goto [Appling]
+      this.#changeState(DsState.Appling);
+      return this.#process();
+      //
+    } else if (option === "cancel") {
+      // - back previous state
+      this.#changeState(this.#StateEx); // check
+      return true;
+      //
+    } else {
+      // - for pure js
+      throw new Error("Unknown option");
+    }
+  }
+
+  /**
+   * FSM flow end point, final processing
+   */
+  #process(): boolean {
+    // - state: [Appling]
+
+    // - undefined object guard
+    const process = this.#modesReg[this.core.mode!]?.applied;
+    if (process === undefined) {
+      console.log(
+        "No applied() hook function config, no processing will be done"
+      );
+      console.log(`Mode config is: (${this.#modesReg[this.core.mode!]})`);
+      this.#changeState(DsState.Normal);
+      return false;
+    }
+
+    process()
+      .then((r) => {
+        // - Promise resolve
+        const { success, data } = r;
+
+        if (success) {
+          // - success: update to local data, goto Normal
+          this.#modesReg[this.core.mode!]?.applySuccess?.(data);
+          this.#changeState(DsState.Normal);
+          //
+        } else {
+          // - error: back to Start
+          this.#modesReg[this.core.mode!]?.applyFail?.(data);
+          this.#changeState(this.#StateEx); // check
+          //
+        }
+        //
+      })
+      .catch((error) => {
+        console.log(error);
+        this.#changeState(this.#StateEx); // check
+      });
+
+    return true;
+  }
+
+  /* ~ State machine transition */
+
+  /**
+   * Mode transition
+   */
+  #changeMode(mode: string): boolean {
+    if (!this.isValidMode(mode))
+      throw new Error(`Mode "${mode}" is not registered.`);
+
+    // - flow limiter
+    if (mode !== "idle" && this.core.state !== DsState.Normal) {
+      console.log("current status not in Normal state, cannot change mode");
+      return false;
+    }
+
+    // - change mode
+    this.#modeEx = this.core.mode ?? "init";
+    this.core.mode = mode;
+
+    // - mode changed & exec hook function
+    this.#printMode();
+    this.#hooks?.modeChanged?.({ ex: this.#modeEx, now: mode });
+    this.#modesReg[mode].modeChanged?.({ ex: this.#modeEx, now: mode });
+
+    return true;
+  }
+
+  /**
+   * State transition
+   */
+  #changeState(state: DsState) {
+    // - change state
+    this.#StateEx = this.core.state ?? DsState.Unknown;
+    this.core.state = state;
+
+    // - execute hook
+    this.#hooks?.stateChanged?.(this.mode, { ex: this.#StateEx, now: state });
+    this.#modesReg[this.mode]?.stateChanged?.(this.mode, {
+      ex: this.#StateEx,
+      now: state,
+    });
+
+    this.#printState();
+
+    if (state === DsState.Normal) {
+      this.#changeMode("idle");
+    }
+  }
+
+  /* ~ debug use */
+
+  #printMode() {
+    if (this.#debug !== true) return;
+    console.debug(`Mode changed: ${this.#modeEx} > ${this.core.mode}`);
+  }
+
+  #printState() {
+    if (this.#debug !== true) return;
+    const mode = this.core.mode;
+    const exState = dsStateStr(this.#StateEx);
+    const nowState = dsStateStr(this.core.state);
+    console.debug(`${mode}: [${exState}] > [${nowState}]`);
   }
 }
