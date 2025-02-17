@@ -1,25 +1,48 @@
+// {
+//   "compilerOptions": {
+//     "lib": ["ESNext", "DOM"],
+//     "target": "ESNext",
+//     "module": "ESNext",
+//     "moduleDetection": "force",
+//     "allowJs": true,
+
+//     "moduleResolution": "bundler",
+//     "verbatimModuleSyntax": true,
+
+//     "strict": true,
+//     "skipLibCheck": true,
+//     "noFallthroughCasesInSwitch": true,
+
+//     // output
+//     "outDir": "dist",
+//     "declaration": true,
+//     "declarationMap": false,
+//     "esModuleInterop": true,
+//     "resolveJsonModule": true,
+//     "removeComments": false
+//   },
+//   "files": ["src/index.ts"]
+// }
+
 {
   "compilerOptions": {
-    "lib": ["ESNext", "DOM"],
-    "target": "ESNext",
     "module": "ESNext",
-    "moduleDetection": "force",
-    "allowJs": true,
-
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
-
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-
-    // output
-    "outDir": "dist",
+    "moduleResolution": "Node", // "bundler"
+    "target": "ESNext",
+    "outDir": "./dist",
     "declaration": true,
     "declarationMap": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "removeComments": false
+    "strict": true,
+    // "removeComments": false,
+    "lib": ["esnext", "dom"],
+    "baseUrl": "./src", // 設置根路徑，方便模組引用
+    "paths": {
+      "@lux721/ds": ["./index.ts"],
+      "@lux721/ds/func": ["./func/index.ts"]
+    }
   },
-  "files": ["src/index.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"] // 排除 node_modules 目錄
 }
