@@ -17,7 +17,6 @@ export class Ds<T extends object> {
   constructor(params: { core: DsCore<T>; useClone?: boolean }) {
     this.core = params.core;
     this.#useClone = params.useClone ?? true; // - default use structureClone()
-    console.log("Ds Version:", this.#version);
   }
 
   /* ~ private vars */
@@ -57,7 +56,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Print this library version
+   * Return this library version
    *
    * @readonly
    * @memberof Ds
@@ -69,7 +68,7 @@ export class Ds<T extends object> {
   /* ~ tables */
 
   /**
-   * Tables
+   * Return whole tables
    *
    * @readonly
    * @type {T[][]}
@@ -80,7 +79,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * TablesCnt
+   * Return tables Count
    *
    * @readonly
    * @type {number}
@@ -93,7 +92,7 @@ export class Ds<T extends object> {
   /* ~ tablesSel */
 
   /**
-   * Selected tables tids
+   * Return selected tables tids
    *
    * @readonly
    * @memberof Ds
@@ -103,7 +102,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Selected tables reference
+   * Return selected tables reference
    *
    * @readonly
    * @memberof Ds
@@ -115,7 +114,7 @@ export class Ds<T extends object> {
   /* ~ rowsSel */
 
   /**
-   * Selected rows locs
+   * Return selected rows locs
    *
    * @readonly
    * @memberof Ds
@@ -125,7 +124,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Selected rows reference
+   * Return selected rows reference
    *
    * @readonly
    * @memberof Ds
@@ -136,7 +135,7 @@ export class Ds<T extends object> {
 
   /* ~ table0 (single table case) */
   /**
-   * Table (single table case)
+   * Return tables[0] (single table case)
    *
    * @readonly
    * @type {(T[] | undefined)}
@@ -147,7 +146,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Table rows count (single table case)
+   * Return tables[0] rows count (single table case)
    *
    * @readonly
    * @type {(number | undefined)}
@@ -160,7 +159,7 @@ export class Ds<T extends object> {
   /* ~ get tableSel[0] & tableSel[0] Reference, (single selection case)  */
 
   /**
-   * Selected tables tid (single selection case)
+   * Return selected table tid (tid of tablesSel[0], single selection case)
    *
    * @readonly
    * @type {(number | undefined)}
@@ -173,7 +172,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Selected table reference (single selection case)
+   * Return selected table reference (tablesSel[0], single selection case)
    *
    * @readonly
    * @type {T[]}
@@ -188,7 +187,7 @@ export class Ds<T extends object> {
   /* ~ get rowSel[0] & rowSel[0] Reference, (single selection case)  */
 
   /**
-   * Selected row loc (single selection case)
+   * Return selected row loc (loc of rowsSel[0], single selection case)
    *
    * @readonly
    * @type {(Loc | undefined)}
@@ -201,7 +200,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Selected row reference (single selection case)
+   * Return selected row reference (rowsSel[0], single selection case)
    *
    * @readonly
    * @type {(T | undefined)}
@@ -308,7 +307,7 @@ export class Ds<T extends object> {
   /* ~ sel Tids & Locs sorting */
 
   /**
-   * Selected tables sorting
+   * Sorting selected tables
    *
    * @param {('forward' | 'reverse')} [direction]
    * @memberof Ds
@@ -320,7 +319,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Selected Rows sorting
+   * Sorting selected Rows
    *
    * @param {('forward' | 'reverse')} [direction]
    * @memberof Ds
@@ -335,7 +334,7 @@ export class Ds<T extends object> {
   /* ~ table & row selection */
 
   /**
-   * Table selection
+   * Table selection by table reference or tid
    *
    * @param {(T[] | number)} table
    * @param {({ multiMode?: MultiMode; sort?: 'forward' | 'reverse' })} [option]
@@ -366,7 +365,7 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Row selection
+   * Row selection by row reference or loc
    *
    * @param {(T | Loc)} row
    * @param {({ multiMode?: MultiMode; sort?: 'forward' | 'reverse' })} [option]
@@ -399,7 +398,9 @@ export class Ds<T extends object> {
   /* ~ mouse click select with MouseEvent key ('ctrl & 'shift') */
 
   /**
-   * Mouse click table selection
+   * Mouse click table selection by table reference or tid and pass mouseEvent
+   * use for detect key pressed (multi selection)
+   * ! For frontend only
    *
    * @param {(T[] | number)} table
    * @param {MouseEvent} e
@@ -422,7 +423,9 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Mouse click row selection
+   * Mouse click row selection by row reference or loc and pass mouseEvent
+   * use for detect key pressed (multi selection)
+   * ! For frontend only
    *
    * @param {(T | Loc)} row
    * @param {MouseEvent} e
@@ -515,7 +518,30 @@ export class Ds<T extends object> {
   }
 
   /**
-   * function signature for new rows
+   * @param {(Tid | Loc)} id
+   * @return {*}  {boolean}
+   * @memberof Ds
+   */
+  isSelected(id: Tid | Loc): boolean {
+    if (typeof id === "number") return this.isSelectedTable(id);
+    else return this.isSelectedRow(id);
+  }
+
+  /* ~ isValid tids & Locs */
+
+  isValidTids(tids: Tid[]): boolean {
+    // Early exit with !some() on invalid tid
+    return !tids.some((tid) => !this.hasTable(tid).found);
+  }
+
+  isValidLocs(locs: Loc[]) {
+    // Early exit with !some() on invalid loc
+    return !locs.some((loc) => !this.hasRow(loc).found);
+  }
+
+  /**
+   * function signature of rows()
+   * for new rows:
    * add rows，replace rows, del rows, replace all rows of existing tables
    *
    * @param {T[]} [source]
@@ -541,7 +567,9 @@ export class Ds<T extends object> {
   ): { success: boolean };
 
   /**
-   * function signature for new tables: new table above, new table above
+   * function signature of rows()
+   * for new tables:
+   * new table above, new table above
    *
    * @param {T[]} source
    * @param {({
@@ -601,12 +629,42 @@ export class Ds<T extends object> {
     const useClone = target?.useClone ?? this.#useClone;
     const changeSel = target?.changeSel ?? false;
 
+    // - params validate for pure js
+    const validWhichs = ["top", "all", "bottom"];
+    const validPlaces = [
+      "newTableAbove",
+      "above",
+      "replace",
+      "below",
+      "newTableBelow",
+    ];
+
+    if (!validWhichs.includes(which)) {
+      paramNotAllow(which, `undefined ${validWhichs.join(" | ")}`);
+    }
+
+    if (!validPlaces.includes(place)) {
+      paramNotAllow(place, `undefined ${validPlaces.join(" | ")}`);
+    }
+
     // - targets
     let tids: number[] = [];
     let locs: Loc[] = [];
 
     // - [ select ] tables or rows
-    if (select === "tables") {
+    if (select === undefined) {
+      // - select is undefined means use  shift or push table mode,
+      // - no tids or locs param input,
+      // - and base on place to define add new table to above or below
+      if (place === "newTableAbove") {
+        // - shift table
+        tids = [0];
+      } else if (place === "newTableBelow") {
+        // - push table
+        tids = [tables.length - 1];
+      }
+      //
+    } else if (select === "tables") {
       //
       tids = [...tablesSel];
       //
@@ -615,19 +673,11 @@ export class Ds<T extends object> {
       locs = [...rowsSel];
       //
     } else if (Array.isArray(select) && select.length > 0) {
-      //
-      typeof select[0] === "number"
-        ? (select as Tid[]).some((t) => t < -1 || t > tables.length) ||
-          (tids = select as Tid[])
-        : (select as Loc[]).some((l) => !this.hasRow(l).found) ||
-          (locs = select as Loc[]);
-      //
-    } else if (select === undefined) {
-      // - new table issuse, can be no tids or locs, predefine push new table to above or below
-      if (place === "newTableAbove") {
-        tids = [0];
-      } else if (place === "newTableBelow") {
-        tids = [tables.length - 1];
+      // check
+      if (typeof select[0] === "number") {
+        this.isValidTids(select as Tid[]) && (tids = select as Tid[]);
+      } else {
+        this.isValidLocs(select as Loc[]) && (locs = select as Loc[]);
       }
       //
     } else if (typeof select === "string") {
@@ -669,10 +719,8 @@ export class Ds<T extends object> {
       // - editting
       tids.forEach((tid) => {
         //
-        // const rows = source ? (useClone ? structuredClone(source) : source) : [];
         const rows = useClone ? structuredClone(source) : source;
 
-        // if (rows.length > 0) {
         if (rows !== undefined) {
           // - add rows -> add rows to table
 
@@ -680,7 +728,7 @@ export class Ds<T extends object> {
             // - to exist table
 
             // - new rows location setup
-            // - if place === below, rid set to the bottom index of the table
+            // - if place is below, rid set to the bottom index of the table
             const tableLength = tables[tid]?.length ?? 0;
             const rid = place === "below" ? tableLength : 0;
 
@@ -705,38 +753,30 @@ export class Ds<T extends object> {
               this.#newSelRef.rows.push(tables[tid][i]);
 
             //
-          } else {
-            paramNotAllow(
-              place,
-              `undefined | "newTableAbove" | "above" | "replace" | "below" | "newTableBelow"`
-            );
           }
+
+          this.#newSelRef.tables.push(tables[tid]);
 
           //
         } else {
-          // - no rows -> del table
+          // - no rows -> deletion
 
-          // check
           if (place === "replace") {
+            // - replace = delete table
             tables.splice(tid, 1);
-          } else {
-            let rid: number;
-
-            if (place === "above") {
-              // - above
-              rid = 0;
-            } else {
-              // - below
-              rid = tables[tid].length - 1;
-            }
-
-            tables[tid].splice(rid, 1);
+            // * remarks: delete table no changeSel function
+          } else if (place === "above") {
+            // - above = shift row
+            tables[tid].splice(0, 1);
+            this.#newSelRef.tables.push(tables[tid]);
+          } else if (place === "below") {
+            // - below = pop row
+            tables[tid].splice(tables[tid].length - 1, 1);
+            this.#newSelRef.tables.push(tables[tid]);
           }
 
           //
         }
-
-        this.#newSelRef.tables.push(tables[tid]); // check: - new tablesSel
 
         //
       });
@@ -744,6 +784,7 @@ export class Ds<T extends object> {
       //
     } else if (locs.length > 0) {
       // - by rows loc
+
       locs = locsSort(locs, "reverse");
 
       // - edit row in specified rows location
@@ -763,8 +804,9 @@ export class Ds<T extends object> {
             this.#newSelRef.rows.push(tables[loc.t][loc.r + i]); // - new rowsSel
           });
         } else {
-          // - del rows
+          // - del row
           tables[loc.t].splice(loc.r, 1);
+          // * remarks: delete row no changeSel function
         }
       });
 

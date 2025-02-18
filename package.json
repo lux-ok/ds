@@ -22,20 +22,22 @@
   "publishConfig": {
     "access": "public"
   },
+  "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.MD"
   ],
   "exports": {
     ".": {
-      "require": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./func": {
-      "require": "./dist/func/index.js",
+      "require": "./dist/func/index.cjs",
       "import": "./dist/func/index.js",
       "types": "./dist/func/index.d.ts"
     }

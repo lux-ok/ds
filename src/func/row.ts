@@ -330,15 +330,25 @@ export function pushRow<T extends object>(
 export function shiftRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   target?: {
-    select?: "tables" | Tid[];
-    which?: "top" | "all" | "bottom";
+    select?: "tables" | Tid | T[];
     changeSel?: boolean;
     useClone?: boolean;
   }
 ): { success: boolean } {
+  const tid = singleTableSelection(ds, target?.select);
+
+  if (tid === undefined) {
+    console.log("Please select one/single table");
+    return { success: false };
+  }
+
+  if (ds.tables[tid]?.length === 0) {
+    console.log("table is empty, no row can be shift");
+    return { success: false };
+  }
+
   return ds.rows(undefined, {
-    select: target?.select ?? "tables", // - default: tables
-    which: target?.which ?? "all", // - default: all
+    select: [tid],
     place: "above",
     changeSel: target?.changeSel,
     useClone: target?.useClone,
@@ -348,15 +358,25 @@ export function shiftRow<T extends object>(
 export function popRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   target?: {
-    select?: "tables" | Tid[];
-    which?: "top" | "all" | "bottom";
+    select?: "tables" | Tid | T[];
     changeSel?: boolean;
     useClone?: boolean;
   }
 ): { success: boolean } {
+  const tid = singleTableSelection(ds, target?.select);
+
+  if (tid === undefined) {
+    console.log("Please select one/single table");
+    return { success: false };
+  }
+
+  if (ds.tables[tid]?.length === 0) {
+    console.log("table is empty, no row can be pop");
+    return { success: false };
+  }
+
   return ds.rows(undefined, {
-    select: target?.select ?? "tables", // - default: tables
-    which: target?.which ?? "all", // - default: all
+    select: [tid],
     place: "below",
     changeSel: target?.changeSel,
     useClone: target?.useClone,

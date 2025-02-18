@@ -285,10 +285,5 @@ export function addBulkTables<T extends object>(
     ds.rows(table, { select, which, place, changeSel, useClone });
   });
 
-  // check: no changeSel now !!!
   return { success: true };
 }
-
-// function paramNotAllow(param: string | undefined, allowedParams: string) {
-//   throw new Error(`Param '${param}' not allow. Valid param: ${allowedParams} `);
-// }
