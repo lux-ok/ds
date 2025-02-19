@@ -30,7 +30,7 @@ export function singleRowSelection<T extends object>(
   ds: Ds<T> | Dsm<T>,
   select?: "rows" | Loc | T
 ): Loc | undefined {
-  const sel = select ?? "tables";
+  const sel = select ?? "rows";
 
   let loc: Loc | undefined = undefined;
 
