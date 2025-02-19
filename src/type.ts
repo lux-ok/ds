@@ -15,11 +15,11 @@ export type MultiMode = "additive" | "range" | undefined;
 export type DsMode = string;
 
 export enum DsState {
-  Unknown = -1,
-  Normal = 0,
-  Starting = 1,
-  Submitting = 2,
-  Appling = 3,
+  Unknown = 0,
+  Normal = 1,
+  Starting = 2,
+  Submitting = 3,
+  Appling = 4,
 }
 
 export const DsStateMap = new Map<number, string>(

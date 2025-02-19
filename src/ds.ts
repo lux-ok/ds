@@ -1,18 +1,17 @@
 import type { DsCore, Loc, Tid, MultiMode } from "./type";
 
 /**
- * Class Ds
+ * A data set manager.
  *
- * @export
- * @class Ds
- * @template T
- * @template {object} T
+ * @template T The type of objects stored in the data set.
  */
 export class Ds<T extends object> {
   /**
-   * Creates an instance of Ds.
-   * @param {{ dsCore: DsCore<T>; useClone?: boolean }} params
-   * @memberof Ds
+   * Creates a new Ds instance.
+   *
+   * @param {object} params The parameters for initialization.
+   * @param {DsCore<T>} params.core The core data handler.
+   * @param {boolean} [params.useClone=true] Whether to use `structureClone` (default: `true`), also some function can be override the default by option
    */
   constructor(params: { core: DsCore<T>; useClone?: boolean }) {
     this.core = params.core;
@@ -29,6 +28,12 @@ export class Ds<T extends object> {
 
   /* ~ private utils */
 
+  /**
+   * Logs a message.
+   *
+   * @param {string} msg The message to log.
+   * @param {string} [func] The function name for context.
+   */
   protected log(msg: string, func?: string) {
     console.log(func ? func + ": " + msg : msg);
   }
@@ -56,34 +61,29 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Return this library version
+   * Gets the current version of Ds library.
    *
-   * @readonly
-   * @memberof Ds
+   * @returns {string} The version string.
    */
-  get version() {
+  get version(): string {
     return this.#version;
   }
 
   /* ~ tables */
 
   /**
-   * Return whole tables
+   * Retrieves all tables as a 2D array.
    *
-   * @readonly
-   * @type {T[][]}
-   * @memberof Ds
+   * @returns {Array<Array<T>>} A 2D array containing all tables.
    */
   get tables(): T[][] {
     return this.core.tables;
   }
 
   /**
-   * Return tables Count
+   * Gets the number of tables.
    *
-   * @readonly
-   * @type {number}
-   * @memberof Ds
+   * @returns {number} Number of tables.
    */
   get tablesCnt(): number {
     return this.core.tables.length;
@@ -92,22 +92,20 @@ export class Ds<T extends object> {
   /* ~ tablesSel */
 
   /**
-   * Return selected tables tids
+   * Gets the selected table indexes.
    *
-   * @readonly
-   * @memberof Ds
+   * @returns {Array<number>} An array of selected table indexes.
    */
-  get tablesSel() {
+  get tablesSel(): number[] {
     return this.core.tablesSel;
   }
 
   /**
-   * Return selected tables reference
+   * Gets references to the selected tables.
    *
-   * @readonly
-   * @memberof Ds
+   * @returns {Array<Array<T>>} A 2D array of selected table references.
    */
-  get tablesSelRef() {
+  get tablesSelRef(): T[][] {
     return this.core.tablesSel.map((loc) => this.core.tables[loc]);
   }
 
@@ -115,19 +113,13 @@ export class Ds<T extends object> {
 
   /**
    * Return selected rows locs
-   *
-   * @readonly
-   * @memberof Ds
    */
-  get rowsSel() {
+  get rowsSel(): Loc[] {
     return this.core.rowsSel;
   }
 
   /**
    * Return selected rows reference
-   *
-   * @readonly
-   * @memberof Ds
    */
   get rowsSelRef() {
     return this.core.rowsSel.map((loc) => this.core.tables[loc.t][loc.r]);
@@ -136,10 +128,6 @@ export class Ds<T extends object> {
   /* ~ table0 (single table case) */
   /**
    * Return tables[0] (single table case)
-   *
-   * @readonly
-   * @type {(T[] | undefined)}
-   * @memberof Ds
    */
   get table(): T[] | undefined {
     return this.core.tables[0];
@@ -147,10 +135,6 @@ export class Ds<T extends object> {
 
   /**
    * Return tables[0] rows count (single table case)
-   *
-   * @readonly
-   * @type {(number | undefined)}
-   * @memberof Ds
    */
   get rowCnt(): number | undefined {
     return this.core.tables[0]?.length;
@@ -160,10 +144,6 @@ export class Ds<T extends object> {
 
   /**
    * Return selected table tid (tid of tablesSel[0], single selection case)
-   *
-   * @readonly
-   * @type {(number | undefined)}
-   * @memberof Ds
    */
   get tableSel(): number | undefined {
     return this.core.tablesSel.length === 1
@@ -173,10 +153,6 @@ export class Ds<T extends object> {
 
   /**
    * Return selected table reference (tablesSel[0], single selection case)
-   *
-   * @readonly
-   * @type {T[]}
-   * @memberof Ds
    */
   get tableSelRef(): T[] {
     return this.core.tablesSel.length === 1
@@ -188,10 +164,6 @@ export class Ds<T extends object> {
 
   /**
    * Return selected row loc (loc of rowsSel[0], single selection case)
-   *
-   * @readonly
-   * @type {(Loc | undefined)}
-   * @memberof Ds
    */
   get rowSel(): Loc | undefined {
     return this.core.rowsSel.length === 1
@@ -201,10 +173,6 @@ export class Ds<T extends object> {
 
   /**
    * Return selected row reference (rowsSel[0], single selection case)
-   *
-   * @readonly
-   * @type {(T | undefined)}
-   * @memberof Ds
    */
   get rowSelRef(): T | undefined {
     return this.core.rowsSel.length === 1
@@ -216,10 +184,6 @@ export class Ds<T extends object> {
 
   /**
    * Find tid and return table reference
-   *
-   * @param {number} t
-   * @return {*}  {({ found: boolean; tableRef: T[] | undefined })}
-   * @memberof Ds
    */
   hasTable(t: number): { found: boolean; tableRef: T[] | undefined } {
     const tableRef = this.core.tables[t];
@@ -228,10 +192,6 @@ export class Ds<T extends object> {
 
   /**
    * Find loc and return row reference
-   *
-   * @param {Loc} loc
-   * @return {*}  {({ found: boolean; rowRef: T | undefined })}
-   * @memberof Ds
    */
   hasRow(loc: Loc): { found: boolean; rowRef: T | undefined } {
     const rowRef = this.core.tables[loc.t]?.[loc.r];
@@ -242,10 +202,6 @@ export class Ds<T extends object> {
 
   /**
    * Find table reference and return tid
-   *
-   * @param {T[]} tableRef
-   * @return {*}  {{ found: boolean; tid: number }}
-   * @memberof Ds
    */
   hasTableRef(tableRef: T[]): { found: boolean; tid: number } {
     const tid = this.core.tables.indexOf(tableRef);
@@ -254,10 +210,6 @@ export class Ds<T extends object> {
 
   /**
    * Find row reference and return loc
-   *
-   * @param {T} rowRef
-   * @return {*}  {{ found: boolean; loc: Loc; row?: T }}
-   * @memberof Ds
    */
   hasRowRef(rowRef: T): { found: boolean; loc: Loc; row?: T } {
     for (let t = 0; t < this.core.tables.length; t++) {
@@ -272,10 +224,6 @@ export class Ds<T extends object> {
 
   /**
    * Tables reference convert to Tids
-   *
-   * @param {T[][]} tables
-   * @return {*}  {{ foundAll: boolean; tids: number[] }}
-   * @memberof Ds
    */
   tablesToTids(tables: T[][]): { foundAll: boolean; tids: number[] } {
     let foundAll = true;
@@ -289,10 +237,6 @@ export class Ds<T extends object> {
 
   /**
    * Rows reference convert to Locs
-   *
-   * @param {T[]} rows
-   * @return {*}  {{ foundAll: boolean; locs: Loc[] }}
-   * @memberof Ds
    */
   rowsToLocs(rows: T[]): { foundAll: boolean; locs: Loc[] } {
     let foundAll = true;
@@ -308,9 +252,6 @@ export class Ds<T extends object> {
 
   /**
    * Sorting selected tables
-   *
-   * @param {('forward' | 'reverse')} [direction]
-   * @memberof Ds
    */
   sortTablesSel(direction?: "forward" | "reverse") {
     this.core.tablesSel.sort((a, b) =>
@@ -320,9 +261,6 @@ export class Ds<T extends object> {
 
   /**
    * Sorting selected Rows
-   *
-   * @param {('forward' | 'reverse')} [direction]
-   * @memberof Ds
    */
   sortRowsSel(direction?: "forward" | "reverse") {
     this.core.rowsSel.sort((a, b) => {
@@ -336,10 +274,6 @@ export class Ds<T extends object> {
   /**
    * Table selection by table reference or tid
    *
-   * @param {(T[] | number)} table
-   * @param {({ multiMode?: MultiMode; sort?: 'forward' | 'reverse' })} [option]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    */
   selectTable(
     table: T[] | number,
@@ -367,10 +301,6 @@ export class Ds<T extends object> {
   /**
    * Row selection by row reference or loc
    *
-   * @param {(T | Loc)} row
-   * @param {({ multiMode?: MultiMode; sort?: 'forward' | 'reverse' })} [option]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    */
   selectRow(
     row: T | Loc,
@@ -401,12 +331,6 @@ export class Ds<T extends object> {
    * Mouse click table selection by table reference or tid and pass mouseEvent
    * use for detect key pressed (multi selection)
    * ! For frontend only
-   *
-   * @param {(T[] | number)} table
-   * @param {MouseEvent} e
-   * @param {('forward' | 'reverse')} [sort]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    */
   clickTable(
     table: T[] | number,
@@ -426,12 +350,6 @@ export class Ds<T extends object> {
    * Mouse click row selection by row reference or loc and pass mouseEvent
    * use for detect key pressed (multi selection)
    * ! For frontend only
-   *
-   * @param {(T | Loc)} row
-   * @param {MouseEvent} e
-   * @param {('forward' | 'reverse')} [sort]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    */
   clickRow(
     row: T | Loc,
@@ -451,8 +369,6 @@ export class Ds<T extends object> {
 
   /**
    * Deselect all selected tables
-   *
-   * @memberof Ds
    */
   deselectAllTable() {
     this.core.tablesSel.length = 0;
@@ -460,8 +376,6 @@ export class Ds<T extends object> {
 
   /**
    * Deselect all selected rows
-   *
-   * @memberof Ds
    */
   deselectAllRow() {
     this.core.rowsSel.length = 0;
@@ -470,7 +384,6 @@ export class Ds<T extends object> {
   /**
    * Deselect all selected tables & rows
    *
-   * @memberof Ds
    */
   deselectAll() {
     this.core.rowsSel.length = 0;
@@ -479,49 +392,24 @@ export class Ds<T extends object> {
 
   /* ~ isSelected */
 
-  /**
-   * @param {number} t
-   * @return {*}  {boolean}
-   * @memberof Ds
-   */
   isSelectedTable(t: number): boolean {
     return this.core.tablesSel.includes(t);
   }
 
-  /**
-   * @param {Loc} loc
-   * @return {*}  {boolean}
-   * @memberof Ds
-   */
   isSelectedRow(loc: Loc): boolean {
     return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
-  /**
-   * @param {T[]} tableRef
-   * @return {*}  {boolean}
-   * @memberof Ds
-   */
   isSelectedTableRef(tableRef: T[]): boolean {
     const { tid: t } = this.hasTableRef(tableRef);
     return this.core.tablesSel.includes(t);
   }
 
-  /**
-   * @param {T} rowRef
-   * @return {*}  {boolean}
-   * @memberof Ds
-   */
   isSelectedRowRef(rowRef: T): boolean {
     const { loc } = this.hasRowRef(rowRef);
     return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
-  /**
-   * @param {(Tid | Loc)} id
-   * @return {*}  {boolean}
-   * @memberof Ds
-   */
   isSelected(id: Tid | Loc): boolean {
     if (typeof id === "number") return this.isSelectedTable(id);
     else return this.isSelectedRow(id);
@@ -544,16 +432,6 @@ export class Ds<T extends object> {
    * for new rows:
    * add rows，replace rows, del rows, replace all rows of existing tables
    *
-   * @param {T[]} [source]
-   * @param {({
-   * 			select?: 'tables' | 'rows' | Tid[] | Loc[];
-   * 			which?: 'top' | 'all' | 'bottom';
-   * 			place?: 'above' | 'replace' | 'below';
-   * 			changeSel?: boolean;
-   * 			useClone?: boolean;
-   * 		})} [target]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    */
   rows(
     source?: T[],
@@ -571,16 +449,6 @@ export class Ds<T extends object> {
    * for new tables:
    * new table above, new table above
    *
-   * @param {T[]} source
-   * @param {({
-   * 			select?: 'tables' | Tid[];
-   * 			which?: 'top' | 'all' | 'bottom';
-   * 			place?: 'newTableAbove' | 'newTableBelow';
-   * 			changeSel?: boolean;
-   * 			useClone?: boolean;
-   * 		})} [target]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    */
   rows(
     source: T[],
@@ -596,16 +464,6 @@ export class Ds<T extends object> {
   /**
    * Main function of rows control
    *
-   * @param {T[]} [source]
-   * @param {({
-   * 			select?: 'tables' | 'rows' | Tid[] | Loc[];
-   * 			which?: 'top' | 'all' | 'bottom';
-   * 			place?: 'newTableAbove' | 'above' | 'replace' | 'below' | 'newTableBelow';
-   * 			changeSel?: boolean;
-   * 			useClone?: boolean;
-   * 		})} [target]
-   * @return {*}  {{ success: boolean }}
-   * @memberof Ds
    *
    * params default: 'newTable', 'bottom', 'below'
    *
@@ -828,10 +686,6 @@ export class Ds<T extends object> {
 /**
  * Locs array sorting
  *
- * @export
- * @param {Loc[]} locs
- * @param {'reverse'} [mode]
- * @return {*}  {Loc[]}
  */
 export function locsSort(locs: Loc[], mode?: "reverse"): Loc[] {
   const sortedLocs = [...locs].sort((a, b) =>
@@ -843,10 +697,6 @@ export function locsSort(locs: Loc[], mode?: "reverse"): Loc[] {
 /**
  * Tids array sorting
  *
- * @export
- * @param {number[]} num
- * @param {'reverse'} [mode]
- * @return {*}  {number[]}
  */
 export function tidsSort(num: number[], mode?: "reverse"): number[] {
   const sortedNums = [...num].sort((a, b) => a - b);

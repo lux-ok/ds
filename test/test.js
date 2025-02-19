@@ -1,4 +1,4 @@
-import { Dsm } from "../dist";
+import { Dsm, DsStateMap, dsStateStr } from "../dist";
 import { addRowAbove, addRowsAbove } from "../dist/func";
 
 console.clear();
@@ -15,3 +15,10 @@ console.log(ds.getModesReg("idle"));
 
 // ds.rows([], { select: 'test' });
 // ds.rows([], { select: [0], which: 'all', place: 'place' });
+console.log(dsStateStr(-1))
+console.log(dsStateStr(0))
+console.log(dsStateStr(1))
+console.log(dsStateStr(2))
+console.log(dsStateStr(3))
+console.log(dsStateStr(4))
+console.log(dsStateStr(5))

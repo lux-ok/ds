@@ -257,9 +257,9 @@ export class Dsm<T extends object> extends Ds<T> {
   /* ~ event (state transition) */
 
   /**
-   * Start specified mode
+   * Start specified mode, FSM flow start point
    *
-   * No option: state transit to [Starting]
+   * option = undefined : state transit to [Starting]
    * option = "submitted": bypass [Starting],go direct to [Submitting]
    * option = "applied": bypass [Starting] and [submitting], go direct to [Appling]
    *
@@ -489,12 +489,12 @@ export class Dsm<T extends object> extends Ds<T> {
 }
 
 /**
- * State enum to string
+ * convert state enum to string
  *
  * @export
  * @param {DsState} [state]
  * @return {*}  {*}
  */
-export function dsStateStr(state?: DsState): any {
-  return DsStateMap.get(state ?? DsState.Unknown);
+export function dsStateStr(state?: DsState): string {
+  return DsStateMap.get(state ?? DsState.Unknown) ?? "Unknown";
 }
