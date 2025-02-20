@@ -1,8 +1,28 @@
+/**
+ * @module row
+ * @typedef {import("../type").Loc} Loc
+ * @typedef {import("../type").Tid} Tid
+ */
+
 import { Ds } from "../ds";
 import { Dsm } from "../dsm";
 import type { Loc, Tid } from "../type";
 import { singleRowSelection, singleTableSelection } from "../util";
 
+/**
+ * Adds multiple new rows to the dataset.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T[]} source - The array of rows to be added.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | "rows" | Tid[] | Loc[]} [target.select] - Specifies the selection scope. Defaults to `"rows"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines where the new rows are applied. Defaults to `"bottom"`.
+ * @param {"above" | "replace" | "below"} [target.place] - Specifies the placement of the new rows. Defaults to `"below"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source rows before adding.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function newRows<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T[],
@@ -23,6 +43,20 @@ export function newRows<T extends object>(
   });
 }
 
+/**
+ * Adds a single new row to the dataset.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T} source - The row to be added.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | "rows" | Tid[] | Loc[]} [target.select] - Specifies the selection scope. Defaults to `"rows"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines where the new row is applied. Defaults to `"bottom"`.
+ * @param {"above" | "replace" | "below"} [target.place] - Specifies the placement of the new row. Defaults to `"below"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source row before adding.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function newRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T,
@@ -45,7 +79,19 @@ export function newRow<T extends object>(
 
 //
 
-//
+/**
+ * Adds multiple new rows above the selected rows.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T[]} source - The array of rows to be added.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc[]} [target.select] - Specifies the selection scope. Defaults to `"rows"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines where the new rows are applied. Defaults to `"all"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source rows before adding.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 
 export function addRowsAbove<T extends object>(
   ds: Ds<T> | Dsm<T>,
@@ -66,6 +112,18 @@ export function addRowsAbove<T extends object>(
   });
 }
 
+/**
+ * Adds a single new row above the selected row.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T} source - The row to be added.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc | T} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source row before adding.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function addRowAbove<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T,
@@ -92,8 +150,19 @@ export function addRowAbove<T extends object>(
 
 //
 
-//
-
+/**
+ * Adds multiple new rows below the selected rows.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T[]} source - The array of rows to be added.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc[]} [target.select] - Specifies the selection scope. Defaults to `"rows"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines where the new rows are applied. Defaults to `"all"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source rows before adding.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function addRowsBelow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T[],
@@ -113,6 +182,18 @@ export function addRowsBelow<T extends object>(
   });
 }
 
+/**
+ * Adds a single new row below the selected row.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T} source - The row to be added.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc | T} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source row before adding.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function addRowBelow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T,
@@ -139,8 +220,19 @@ export function addRowBelow<T extends object>(
 
 //
 
-//
-
+/**
+ * Replaces multiple rows with new data.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T[]} source - The array of rows to replace the existing rows.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc[]} [target.select] - Specifies the selection scope. Defaults to `"rows"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines which rows to replace. Defaults to `"all"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source rows before replacing.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function setRows<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T[],
@@ -160,6 +252,18 @@ export function setRows<T extends object>(
   });
 }
 
+/**
+ * Replaces a single row with new data.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T} source - The row to replace the existing row.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc | T} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the source row before replacing.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function setRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T,
@@ -186,8 +290,18 @@ export function setRow<T extends object>(
 
 //
 
-//
-
+/**
+ * Deletes multiple rows from the dataset.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc[]} [target.select] - Specifies the selection scope. Defaults to `"rows"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines which rows to delete. Defaults to `"all"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the selected rows before deletion.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function delRows<T extends object>(
   ds: Ds<T> | Dsm<T>,
   target?: {
@@ -206,6 +320,17 @@ export function delRows<T extends object>(
   });
 }
 
+/**
+ * Deletes a single row from the dataset.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"rows" | Loc | T} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the selected row before deletion.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function delRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   target?: {
@@ -231,8 +356,19 @@ export function delRow<T extends object>(
 
 //
 
-//
-
+/**
+ * Inserts multiple rows at the beginning of the selected tables.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T[]} source - The rows to insert.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | Tid[]} [target.select] - Specifies the selection scope. Defaults to `"tables"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines which tables to insert into. Defaults to `"all"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the inserted rows.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function unshiftRows<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T[],
@@ -252,6 +388,18 @@ export function unshiftRows<T extends object>(
   });
 }
 
+/**
+ * Inserts a single row at the beginning of the selected table.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T} source - The row to insert.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | Tid | T[]} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the inserted row.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function unshiftRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T,
@@ -278,8 +426,19 @@ export function unshiftRow<T extends object>(
 
 //
 
-//
-
+/**
+ * Appends multiple rows at the end of the selected tables.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T[]} source - The rows to append.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | Tid[]} [target.select] - Specifies the selection scope. Defaults to `"tables"`.
+ * @param {"top" | "all" | "bottom"} [target.which] - Determines which tables to insert into. Defaults to `"all"`.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the inserted rows.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function pushRows<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T[],
@@ -299,6 +458,18 @@ export function pushRows<T extends object>(
   });
 }
 
+/**
+ * Appends a single row at the end of the selected table.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {T} source - The row to append.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | Tid | T[]} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the inserted row.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function pushRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   source: T,
@@ -325,8 +496,17 @@ export function pushRow<T extends object>(
 
 //
 
-//
-
+/**
+ * Removes the first row from the selected table.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | Tid | T[]} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the removed row.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function shiftRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   target?: {
@@ -355,6 +535,17 @@ export function shiftRow<T extends object>(
   });
 }
 
+/**
+ * Removes the last row from the selected table.
+ *
+ * @template {object} T - The type of the row data.
+ * @param {Ds<T> | Dsm<T>} ds - The dataset or dataset manager.
+ * @param {Object} [target] - Optional target configuration.
+ * @param {"tables" | Tid | T[]} [target.select] - Specifies the selection scope.
+ * @param {boolean} [target.changeSel] - Whether to update the selection.
+ * @param {boolean} [target.useClone] - Whether to clone the removed row.
+ * @returns {{ success: boolean }} - The result of the operation.
+ */
 export function popRow<T extends object>(
   ds: Ds<T> | Dsm<T>,
   target?: {
