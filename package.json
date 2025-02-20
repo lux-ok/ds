@@ -1,45 +1,58 @@
 {
   "name": "@lux721/ds",
-  "version": "0.1.1",
-  "description": "Generic data set control library for js/ts",
+  "version": "0.2.2",
   "author": "Thomas Choi",
-  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomaschoi721/ds.git"
+  },
+  "description": "Generic dataset control library for js/ts",
   "keywords": [
     "javascript",
     "typescript",
     "npm",
     "generic dataset",
     "generic data tables",
+    "multi selection",
     "crud FSM",
     "tables",
     "rows"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/thomaschoi721/ds.git"
-  },
-  "scripts": {
-    "build": "bunx rimraf dist && bunx tsc --project tsconfig.json",
-    "clean": "bunx rimraf dist",
-    "dev": "bunx tsc --watch",
-    "test": "bun test",
-    "prepublishOnly": "bun run clean && bun run build && echo '{\"type\": \"module\"}' > dist/package.json"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0"
-  },
-  "files": [
-    "dist/**/*",
-    "README.md"
-  ],
-  "exports": {
-    "import": "./dist/index.js",
-    "types": "./dist/index.d.ts"
-  },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "license": "MIT",
   "publishConfig": {
     "access": "public"
+  },
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.MD"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./func": {
+      "require": "./dist/func/index.cjs",
+      "import": "./dist/func/index.js",
+      "types": "./dist/func/index.d.ts"
+    }
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.2",
+    "rimraf": "^6.0.1",
+    "rollup": "^4.34.8",
+    "rollup-plugin-delete": "^2.1.0",
+    "tslib": "^2.8.1",
+    "typedoc": "^0.27.7",
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
   }
 }
