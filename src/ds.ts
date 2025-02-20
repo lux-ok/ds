@@ -21,7 +21,7 @@ export class Ds<T extends object> {
   protected _core: DsCore<T>;
 
   /** The current version of the dataset instance. */
-  private _version = "0.2.2";
+  private _version = "0.2.3";
 
   /** Whether to use `structuredClone()` when handling data. */
   private _useClone?: boolean;
