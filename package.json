@@ -44,9 +44,6 @@
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^12.1.2",
-    "better-docs": "^2.7.3",
-    "jsdoc": "^4.0.4",
-    "jsdoc-plugin-typescript": "^3.2.0",
     "rimraf": "^6.0.1",
     "rollup": "^4.34.8",
     "rollup-plugin-delete": "^2.1.0",
@@ -56,8 +53,6 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "watch": "rollup -c -w",
-    "doc": "jsdoc -c jsdoc.config.json",
-    "doc-clean": "rimraf docs"
+    "watch": "rollup -c -w"
   }
 }

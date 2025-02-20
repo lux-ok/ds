@@ -1,221 +1,277 @@
+/**
+ * @module ds
+ * @typedef {import("./type").DsCore} DsCore
+ * @typedef {import("./type").Loc} Loc
+ * @typedef {import("./type").Tid} Tid
+ * @typedef {import("./type").MultiMode} MultiMode
+ */
+
 import type { DsCore, Loc, Tid, MultiMode } from "./type";
 
 /**
- * A data set manager.
- *
- * @template T The type of objects stored in the data set.
+ * A generic data set manager.
+ * @template {object} T - The type of the data structure managed by this instance.
  */
 export class Ds<T extends object> {
-  /**
-   * Creates a new Ds instance.
-   *
-   * @param {object} params The parameters for initialization.
-   * @param {DsCore<T>} params.core The core data handler.
-   * @param {boolean} [params.useClone=true] Whether to use `structureClone` (default: `true`), also some function can be override the default by option
-   */
-  constructor(params: { core: DsCore<T>; useClone?: boolean }) {
-    this.core = params.core;
-    this.#useClone = params.useClone ?? true; // - default use structureClone()
-  }
+  //
 
   /* ~ private vars */
 
-  protected core: DsCore<T>;
-  #version = "0.2.2";
-  #useClone?: boolean;
-  #oldSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
-  #newSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
+  /** The core instance managing dataset operations. */
+  protected _core: DsCore<T>;
 
-  /* ~ private utils */
+  /** The current version of the dataset instance. */
+  private _version = "0.2.2";
+
+  /** Whether to use `structuredClone()` when handling data. */
+  private _useClone?: boolean;
+
+  /** Stores the previous selection reference. */
+  private _oldSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
+
+  /** Stores the current selection reference. */
+  private _newSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
+
+  //
+
+  /**
+   * Creates an instance of Ds.
+   * @param {Object} params - The initialization parameters.
+   * @param {DsCore<T>} params.core - The core instance managing data operations.
+   * @param {boolean} [params.useClone=true] - Whether to use `structuredClone()` when handling data.
+   */
+  constructor(params: { core: DsCore<T>; useClone?: boolean }) {
+    this._core = params.core;
+    this._useClone = params.useClone ?? true; // - default use structureClone()
+  }
+
+  //
+
+  /* ~ private sub function */
 
   /**
    * Logs a message.
-   *
-   * @param {string} msg The message to log.
-   * @param {string} [func] The function name for context.
+   * @param {string} msg - The message to log.
+   * @param {string} [func] - The function name to prefix the message.
    */
-  protected log(msg: string, func?: string) {
+  protected log(msg: string, func?: string): void {
     console.log(func ? func + ": " + msg : msg);
   }
 
-  #updateTableSel(changeSel?: boolean) {
+  /**
+   * Updates the selected tables.
+   * @param {boolean} [changeSel] - Override default. Whether to use the new selection reference.
+   */
+  private _updateTableSel(changeSel?: boolean): void {
     const buf: T[][] = changeSel
-      ? this.#newSelRef.tables
-      : this.#oldSelRef.tables;
-    this.core.tablesSel.length = 0;
+      ? this._newSelRef.tables
+      : this._oldSelRef.tables;
+    this._core.tablesSel.length = 0;
     buf.forEach((table) => {
       const { found, tid: t } = this.hasTableRef(table);
-      found && this.core.tablesSel.push(t);
-    });
-    buf.length = 0;
-  }
-
-  #updateRowSel(changeSel?: boolean) {
-    const buf: T[] = changeSel ? this.#newSelRef.rows : this.#oldSelRef.rows;
-    this.core.rowsSel.length = 0;
-    buf.forEach((row) => {
-      const { found, loc } = this.hasRowRef(row);
-      found && this.core.rowsSel.push(loc);
+      found && this._core.tablesSel.push(t);
     });
     buf.length = 0;
   }
 
   /**
-   * Gets the current version of Ds library.
-   *
-   * @returns {string} The version string.
+   * Updates the selected rows.
+   * @param {boolean} [changeSel] - Override default. Whether to use the new selection reference.
+   */
+  private _updateRowSel(changeSel?: boolean): void {
+    const buf: T[] = changeSel ? this._newSelRef.rows : this._oldSelRef.rows;
+    this._core.rowsSel.length = 0;
+    buf.forEach((row) => {
+      const { found, loc } = this.hasRowRef(row);
+      found && this._core.rowsSel.push(loc);
+    });
+    buf.length = 0;
+  }
+
+  /**
+   * Gets the current version of the dataset.
+   * @returns {string} The dataset version.
    */
   get version(): string {
-    return this.#version;
+    return this._version;
   }
+
+  //
 
   /* ~ tables */
 
   /**
-   * Retrieves all tables as a 2D array.
-   *
-   * @returns {Array<Array<T>>} A 2D array containing all tables.
+   * Gets all tables in the dataset.
+   * @returns {T[][]} A two-dimensional array representing the tables.
    */
   get tables(): T[][] {
-    return this.core.tables;
+    return this._core.tables;
   }
 
   /**
-   * Gets the number of tables.
-   *
-   * @returns {number} Number of tables.
+   * Gets the total number of tables in the dataset.
+   * @returns {number} The number of tables.
    */
   get tablesCnt(): number {
-    return this.core.tables.length;
+    return this._core.tables.length;
   }
+
+  //
 
   /* ~ tablesSel */
 
   /**
-   * Gets the selected table indexes.
-   *
-   * @returns {Array<number>} An array of selected table indexes.
+   * Gets the selected table indices.
+   * @returns {number[]} An array of selected table indices.
    */
   get tablesSel(): number[] {
-    return this.core.tablesSel;
+    return this._core.tablesSel;
   }
 
   /**
    * Gets references to the selected tables.
-   *
-   * @returns {Array<Array<T>>} A 2D array of selected table references.
+   * @returns {T[][]} A two-dimensional array of selected tables.
    */
   get tablesSelRef(): T[][] {
-    return this.core.tablesSel.map((loc) => this.core.tables[loc]);
+    return this._core.tablesSel.map((loc) => this._core.tables[loc]);
   }
+
+  //
 
   /* ~ rowsSel */
 
   /**
-   * Return selected rows locs
+   * Gets the selected row locations.
+   * @returns {Loc[]} An array of selected row locations.
    */
   get rowsSel(): Loc[] {
-    return this.core.rowsSel;
+    return this._core.rowsSel;
   }
 
   /**
-   * Return selected rows reference
+   * Gets references to the selected rows.
+   * @returns {T[]} An array of selected row values.
    */
-  get rowsSelRef() {
-    return this.core.rowsSel.map((loc) => this.core.tables[loc.t][loc.r]);
+  get rowsSelRef(): T[] {
+    return this._core.rowsSel.map((loc) => this._core.tables[loc.t][loc.r]);
   }
 
-  /* ~ table0 (single table case) */
+  //
+
+  /* ~ tables[0] (single table case) */
+
   /**
-   * Return tables[0] (single table case)
+   * Gets the first table from the core tables.
+   * **tables[0], useful for single table case**
+   * @returns {T[] | undefined} The first table or undefined if no tables exist.
    */
   get table(): T[] | undefined {
-    return this.core.tables[0];
+    return this._core.tables[0];
   }
 
   /**
-   * Return tables[0] rows count (single table case)
+   * Gets the row count of the first table.
+   * **tables[0], useful for single table case**
+   * @returns {number | undefined} The number of rows in the first table or undefined if no tables exist.
    */
   get rowCnt(): number | undefined {
-    return this.core.tables[0]?.length;
+    return this._core.tables[0]?.length;
   }
 
-  /* ~ get tableSel[0] & tableSel[0] Reference, (single selection case)  */
+  /* ~ tableSel[0] & tableSel[0] Reference, (single selection case)  */
 
   /**
-   * Return selected table tid (tid of tablesSel[0], single selection case)
+   * Gets the selected table index if only one table is selected.
+   * **table tid of tablesSel[0], useful for single selection case**
+   * @returns {number | undefined} The selected table index or undefined if multiple or no tables are selected.
    */
   get tableSel(): number | undefined {
-    return this.core.tablesSel.length === 1
-      ? this.core.tablesSel[0]
+    return this._core.tablesSel.length === 1
+      ? this._core.tablesSel[0]
       : undefined;
   }
 
   /**
-   * Return selected table reference (tablesSel[0], single selection case)
+   * Gets the reference to the selected table if only one table is selected.
+   * **table reference of tablesSel[0], useful for single selection case**
+   * @returns {T[]} The selected table or an empty array if multiple or no tables are selected.
    */
   get tableSelRef(): T[] {
-    return this.core.tablesSel.length === 1
-      ? this.core.tables[this.core.tablesSel[0]]
+    return this._core.tablesSel.length === 1
+      ? this._core.tables[this._core.tablesSel[0]]
       : [];
   }
 
-  /* ~ get rowSel[0] & rowSel[0] Reference, (single selection case)  */
+  //
+
+  /* ~ rowSel[0] & rowSel[0] Reference, (single selection case)  */
 
   /**
-   * Return selected row loc (loc of rowsSel[0], single selection case)
+   * Gets the selected row location if only one row is selected.
+   * **Row loc of rowsSel[0], useful for single selection case**
+   * @returns {Loc | undefined} The selected row location or undefined if multiple or no rows are selected.
    */
   get rowSel(): Loc | undefined {
-    return this.core.rowsSel.length === 1
-      ? { t: this.core.rowsSel[0].t, r: this.core.rowsSel[0].r }
+    return this._core.rowsSel.length === 1
+      ? { t: this._core.rowsSel[0].t, r: this._core.rowsSel[0].r }
       : undefined;
   }
 
   /**
-   * Return selected row reference (rowsSel[0], single selection case)
+   * Gets the reference to the selected row if only one row is selected.
+   * **Row reference of rowsSel[0], useful for single selection case**
+   * @returns {T | undefined} The selected row or undefined if multiple or no rows are selected.
    */
   get rowSelRef(): T | undefined {
-    return this.core.rowsSel.length === 1
-      ? this.core.tables[this.core.rowsSel[0].t][this.core.rowsSel[0].r]
+    return this._core.rowsSel.length === 1
+      ? this._core.tables[this._core.rowsSel[0].t][this._core.rowsSel[0].r]
       : undefined;
   }
 
   /* ~ has table / row location checker  */
 
   /**
-   * Find tid and return table reference
+   * Find table if a table exists at the given index(tid).
+   * @param {number} t - The index of the table.
+   * @returns {{ found: boolean; tableRef: T[] | undefined }} An object indicating whether the table exists and its reference if found.
    */
   hasTable(t: number): { found: boolean; tableRef: T[] | undefined } {
-    const tableRef = this.core.tables[t];
+    const tableRef = this._core.tables[t];
     return { found: tableRef !== undefined, tableRef };
   }
 
   /**
-   * Find loc and return row reference
+   * Find row if a row exists at the given location(loc).
+   * @param {Loc} loc - The location of the row, containing table and row indices.
+   * @returns {{ found: boolean; rowRef: T | undefined }} An object indicating whether the row exists and its reference if found.
    */
   hasRow(loc: Loc): { found: boolean; rowRef: T | undefined } {
-    const rowRef = this.core.tables[loc.t]?.[loc.r];
+    const rowRef = this._core.tables[loc.t]?.[loc.r];
     return { found: rowRef !== undefined, rowRef };
   }
 
   /* ~ has table / row reference checker */
 
   /**
-   * Find table reference and return tid
+   * Find table if a given table reference exists in the core tables.
+   * @param {T[]} tableRef - The reference to the table.
+   * @returns {{ found: boolean; tid: Tid }} An object indicating whether the table reference exists and its index if found.
    */
-  hasTableRef(tableRef: T[]): { found: boolean; tid: number } {
-    const tid = this.core.tables.indexOf(tableRef);
+  hasTableRef(tableRef: T[]): { found: boolean; tid: Tid } {
+    const tid = this._core.tables.indexOf(tableRef);
     return { found: tid > -1, tid };
   }
 
   /**
-   * Find row reference and return loc
+   * Find row if a given row reference exists in any table.
+   * @param {T} rowRef - The reference to the row.
+   * @returns {{ found: boolean; loc: Loc; row?: T }} An object indicating whether the row reference exists, its location if found, and the row itself.
    */
   hasRowRef(rowRef: T): { found: boolean; loc: Loc; row?: T } {
-    for (let t = 0; t < this.core.tables.length; t++) {
-      let r = this.core.tables[t].indexOf(rowRef);
+    for (let t = 0; t < this._core.tables.length; t++) {
+      let r = this._core.tables[t].indexOf(rowRef);
       if (r !== -1)
-        return { found: true, loc: { t, r }, row: this.core.tables[t]?.[r] };
+        return { found: true, loc: { t, r }, row: this._core.tables[t]?.[r] };
     }
     return { found: false, loc: { t: -1, r: -1 } };
   }
@@ -223,9 +279,11 @@ export class Ds<T extends object> {
   /* ~ ref to indexes: Tids & Locs */
 
   /**
-   * Tables reference convert to Tids
+   * Converts table references to their corresponding table indices.
+   * @param {T[][]} tables - An array of table references.
+   * @returns {{ foundAll: boolean; tids: Tid[] }} An object indicating whether all tables were found and their corresponding indices.
    */
-  tablesToTids(tables: T[][]): { foundAll: boolean; tids: number[] } {
+  tablesToTids(tables: T[][]): { foundAll: boolean; tids: Tid[] } {
     let foundAll = true;
     const tids = tables.map((table) => {
       const { found, tid: t } = this.hasTableRef(table);
@@ -236,7 +294,9 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Rows reference convert to Locs
+   * Converts row references to their corresponding locations.
+   * @param {T[]} rows - An array of row references.
+   * @returns {{ foundAll: boolean; locs: Loc[] }} An object indicating whether all rows were found and their corresponding locations.
    */
   rowsToLocs(rows: T[]): { foundAll: boolean; locs: Loc[] } {
     let foundAll = true;
@@ -251,19 +311,21 @@ export class Ds<T extends object> {
   /* ~ sel Tids & Locs sorting */
 
   /**
-   * Sorting selected tables
+   * Sorts the selected table indices in the specified direction.
+   * @param {"forward" | "reverse"} [direction] - The sorting direction, defaults to "forward".
    */
   sortTablesSel(direction?: "forward" | "reverse") {
-    this.core.tablesSel.sort((a, b) =>
+    this._core.tablesSel.sort((a, b) =>
       direction === "reverse" ? b - a : a - b
     );
   }
 
   /**
-   * Sorting selected Rows
+   * Sorts the selected rows based on table and row indices in the specified direction.
+   * @param {"forward" | "reverse"} [direction] - The sorting direction, defaults to "forward".
    */
   sortRowsSel(direction?: "forward" | "reverse") {
-    this.core.rowsSel.sort((a, b) => {
+    this._core.rowsSel.sort((a, b) => {
       if (a.t === b.t) return direction === "reverse" ? b.r - a.r : a.r - b.r;
       return direction === "reverse" ? b.t - a.t : a.t - b.t;
     });
@@ -272,26 +334,28 @@ export class Ds<T extends object> {
   /* ~ table & row selection */
 
   /**
-   * Table selection by table reference or tid
-   *
+   * Selects a table by its reference or index(tid).
+   * @param {T[] | Tid} table - The table reference or index.
+   * @param {{ multiMode?: MultiMode; sort?: "forward" | "reverse" }} [option] - Selection options, including multi-selection mode and sorting direction.
+   * @returns {{ success: boolean }} An object indicating whether the selection was successful.
    */
   selectTable(
-    table: T[] | number,
+    table: T[] | Tid,
     option?: { multiMode?: MultiMode; sort?: "forward" | "reverse" }
   ): { success: boolean } {
     // - support table index number and table reference both
     let success = true;
-    let loc: number = -1;
+    let tid: number = -1;
 
     if (typeof table === "number") {
-      this.hasTable(table).found ? (loc = table) : (success = false);
+      this.hasTable(table).found ? (tid = table) : (success = false);
     } else {
       const { found, tid: t } = this.hasTableRef(table);
-      found ? (loc = t) : (success = false);
+      found ? (tid = t) : (success = false);
     }
 
     if (success) {
-      multiSelectionLogic(loc, this.core.tablesSel, option?.multiMode);
+      multiSelectionLogic(tid, this._core.tablesSel, option?.multiMode);
       option?.sort && this.sortTablesSel(option.sort);
     }
 
@@ -299,8 +363,10 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Row selection by row reference or loc
-   *
+   * Selects a row by its reference or location.
+   * @param {T | Loc} row - The row reference or location.
+   * @param {{ multiMode?: MultiMode; sort?: "forward" | "reverse" }} [option] - Selection options, including multi-selection mode and sorting direction.
+   * @returns {{ success: boolean }} An object indicating whether the selection was successful.
    */
   selectRow(
     row: T | Loc,
@@ -318,7 +384,7 @@ export class Ds<T extends object> {
     }
 
     if (success) {
-      multiSelectionLogic(loc, this.core.rowsSel, option?.multiMode);
+      multiSelectionLogic(loc, this._core.rowsSel, option?.multiMode);
       option?.sort && this.sortRowsSel(option.sort);
     }
 
@@ -328,12 +394,15 @@ export class Ds<T extends object> {
   /* ~ mouse click select with MouseEvent key ('ctrl & 'shift') */
 
   /**
-   * Mouse click table selection by table reference or tid and pass mouseEvent
-   * use for detect key pressed (multi selection)
-   * ! For frontend only
+   * Handles table selection on mouse click with support for multi-selection modes.
+   * **Only intended for frontend usage.**
+   * @param {T[] | Tid} table - The table reference or index.
+   * @param {MouseEvent} e - The mouse event triggering the selection.
+   * @param {"forward" | "reverse"} [sort] - The sorting direction.
+   * @returns {{ success: boolean }} An object indicating whether the selection was successful.
    */
   clickTable(
-    table: T[] | number,
+    table: T[] | Tid,
     e: MouseEvent,
     sort?: "forward" | "reverse"
   ): { success: boolean } {
@@ -347,9 +416,12 @@ export class Ds<T extends object> {
   }
 
   /**
-   * Mouse click row selection by row reference or loc and pass mouseEvent
-   * use for detect key pressed (multi selection)
-   * ! For frontend only
+   * Handles row selection on mouse click with support for multi-selection modes.
+   * **Only intended for frontend usage.**
+   * @param {T | Loc} row - The row reference or location.
+   * @param {MouseEvent} e - The mouse event triggering the selection.
+   * @param {"forward" | "reverse"} [sort] - The sorting direction.
+   * @returns {{ success: boolean }} An object indicating whether the selection was successful.
    */
   clickRow(
     row: T | Loc,
@@ -368,70 +440,105 @@ export class Ds<T extends object> {
   /* ~ deselection */
 
   /**
-   * Deselect all selected tables
+   * Deselects all selected tables.
+   * @returns {void}
    */
-  deselectAllTable() {
-    this.core.tablesSel.length = 0;
+  deselectAllTable(): void {
+    this._core.tablesSel.length = 0;
   }
 
   /**
-   * Deselect all selected rows
+   * Deselects all selected rows.
+   * @returns {void}
    */
-  deselectAllRow() {
-    this.core.rowsSel.length = 0;
+  deselectAllRow(): void {
+    this._core.rowsSel.length = 0;
   }
 
   /**
-   * Deselect all selected tables & rows
-   *
+   * Deselects all selected tables and rows.
+   * @returns {void}
    */
-  deselectAll() {
-    this.core.rowsSel.length = 0;
-    this.core.tablesSel.length = 0;
+  deselectAll(): void {
+    this._core.rowsSel.length = 0;
+    this._core.tablesSel.length = 0;
   }
 
   /* ~ isSelected */
 
-  isSelectedTable(t: number): boolean {
-    return this.core.tablesSel.includes(t);
+  /**
+   * Checks if a table with the given index is selected.
+   * @param {Tid} tid - The table index.
+   * @returns {boolean} True if the table is selected, otherwise false.
+   */
+  isSelectedTable(tid: Tid): boolean {
+    return this._core.tablesSel.includes(tid);
   }
 
+  /**
+   * Checks if a row at the given location is selected.
+   * @param {Loc} loc - The row location.
+   * @returns {boolean} True if the row is selected, otherwise false.
+   */
   isSelectedRow(loc: Loc): boolean {
-    return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
+    return this._core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
+  /**
+   * Checks if a table reference is selected.
+   * @param {T[]} tableRef - The table reference.
+   * @returns {boolean} True if the table is selected, otherwise false.
+   */
   isSelectedTableRef(tableRef: T[]): boolean {
     const { tid: t } = this.hasTableRef(tableRef);
-    return this.core.tablesSel.includes(t);
+    return this._core.tablesSel.includes(t);
   }
 
+  /**
+   * Checks if a row reference is selected.
+   * @param {T} rowRef - The row reference.
+   * @returns {boolean} True if the row is selected, otherwise false.
+   */
   isSelectedRowRef(rowRef: T): boolean {
     const { loc } = this.hasRowRef(rowRef);
-    return this.core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
+    return this._core.rowsSel.some((sel) => sel.t === loc.t && sel.r === loc.r);
   }
 
-  isSelected(id: Tid | Loc): boolean {
-    if (typeof id === "number") return this.isSelectedTable(id);
-    else return this.isSelectedRow(id);
+  /**
+   * Checks if a table or row (by index or location) is selected.
+   * @param {Tid | Loc} index - The table index or row location.
+   * @returns {boolean} True if the table or row is selected, otherwise false.
+   */
+  isSelected(index: Tid | Loc): boolean {
+    if (typeof index === "number") return this.isSelectedTable(index);
+    else return this.isSelectedRow(index);
   }
 
   /* ~ isValid tids & Locs */
 
+  /**
+   * Checks if all given table IDs are valid.
+   * @param {Tid[]} tids - The array of table IDs.
+   * @returns {boolean} True if all table IDs are valid, otherwise false.
+   */
   isValidTids(tids: Tid[]): boolean {
     // Early exit with !some() on invalid tid
     return !tids.some((tid) => !this.hasTable(tid).found);
   }
 
-  isValidLocs(locs: Loc[]) {
+  /**
+   * Checks if all given row locations are valid.
+   * @param {Loc[]} locs - The array of row locations.
+   * @returns {boolean} True if all row locations are valid, otherwise false.
+   */
+  isValidLocs(locs: Loc[]): boolean {
     // Early exit with !some() on invalid loc
     return !locs.some((loc) => !this.hasRow(loc).found);
   }
 
   /**
-   * function signature of rows()
-   * for new rows:
-   * add rows，replace rows, del rows, replace all rows of existing tables
-   *
+   * Manipulates rows based on selection and placement rules.
+   * @see rows (full documentation in main implementation)
    */
   rows(
     source?: T[],
@@ -445,10 +552,8 @@ export class Ds<T extends object> {
   ): { success: boolean };
 
   /**
-   * function signature of rows()
-   * for new tables:
-   * new table above, new table above
-   *
+   * Modifies rows or creates new tables based on placement rules.
+   * @see rows (full documentation in main implementation)
    */
   rows(
     source: T[],
@@ -462,11 +567,15 @@ export class Ds<T extends object> {
   ): { success: boolean };
 
   /**
-   * Main function of rows control
-   *
-   *
-   * params default: 'newTable', 'bottom', 'below'
-   *
+   * Manipulates rows within tables based on selection criteria and placement rules.
+   * @param {T[]} [source] - The source rows to be added or modified.
+   * @param {Object} [target] - The target configuration for row manipulation.
+   * @param {"tables" | "rows" | Tid[] | Loc[]} [target.select] - Selection mode or specific IDs/locations.
+   * @param {"top" | "all" | "bottom"} [target.which] - Determines which rows are affected.
+   * @param {"newTableAbove" | "above" | "replace" | "below" | "newTableBelow"} [target.place] - Placement of rows.
+   * @param {boolean} [target.changeSel] - Whether to update selection.
+   * @param {boolean} [target.useClone] - Whether to use `structuredClone()` for deep copying when adding or modifying rows.
+   * @returns {{ success: boolean }} True if operation was successful.
    */
   rows(
     source?: T[],
@@ -478,13 +587,13 @@ export class Ds<T extends object> {
       useClone?: boolean;
     }
   ): { success: boolean } {
-    const { tables, tablesSel, rowsSel } = this.core;
+    const { tables, tablesSel, rowsSel } = this._core;
 
     // - default value when params undefined
     const select = target?.select;
     const which = target?.which ?? "bottom";
     const place = target?.place ?? "below";
-    const useClone = target?.useClone ?? this.#useClone;
+    const useClone = target?.useClone ?? this._useClone;
     const changeSel = target?.changeSel ?? false;
 
     // - params validate for pure js
@@ -562,12 +671,12 @@ export class Ds<T extends object> {
 
     // - backup the reference of selected items (before deleting)
     // - for renew tablesSel & rowsSel indexes
-    this.#oldSelRef.tables = this.tablesSelRef;
-    this.#oldSelRef.rows = this.rowsSelRef;
+    this._oldSelRef.tables = this.tablesSelRef;
+    this._oldSelRef.rows = this.rowsSelRef;
 
     // - clear buffer
-    this.#newSelRef.rows.length = 0;
-    this.#newSelRef.tables.length = 0;
+    this._newSelRef.rows.length = 0;
+    this._newSelRef.tables.length = 0;
 
     if (tids.length > 0) {
       // - by tables tid
@@ -596,7 +705,7 @@ export class Ds<T extends object> {
             // - add rows to the table
             rows.forEach((row, i) => {
               tables[tid].splice(rid + i, 0, row);
-              this.#newSelRef.rows.push(tables[tid][rid + i]); // - new rowsSel
+              this._newSelRef.rows.push(tables[tid][rid + i]); // - new rowsSel
             });
             //
           } else if (place === "newTableAbove" || place === "newTableBelow") {
@@ -608,12 +717,12 @@ export class Ds<T extends object> {
             // - add a empty table
             tables.splice(tid, 0, rows);
             for (let i = 0; i < rows.length; i++)
-              this.#newSelRef.rows.push(tables[tid][i]);
+              this._newSelRef.rows.push(tables[tid][i]);
 
             //
           }
 
-          this.#newSelRef.tables.push(tables[tid]);
+          this._newSelRef.tables.push(tables[tid]);
 
           //
         } else {
@@ -626,11 +735,11 @@ export class Ds<T extends object> {
           } else if (place === "above") {
             // - above = shift row
             tables[tid].splice(0, 1);
-            this.#newSelRef.tables.push(tables[tid]);
+            this._newSelRef.tables.push(tables[tid]);
           } else if (place === "below") {
             // - below = pop row
             tables[tid].splice(tables[tid].length - 1, 1);
-            this.#newSelRef.tables.push(tables[tid]);
+            this._newSelRef.tables.push(tables[tid]);
           }
 
           //
@@ -659,7 +768,7 @@ export class Ds<T extends object> {
 
           rows.forEach((row, i) => {
             tables[loc.t].splice(loc.r + i, place === "replace" ? 1 : 0, row);
-            this.#newSelRef.rows.push(tables[loc.t][loc.r + i]); // - new rowsSel
+            this._newSelRef.rows.push(tables[loc.t][loc.r + i]); // - new rowsSel
           });
         } else {
           // - del row
@@ -668,13 +777,13 @@ export class Ds<T extends object> {
         }
       });
 
-      this.#newSelRef.tables.push(...this.tablesSelRef); // - tablesSel not change
+      this._newSelRef.tables.push(...this.tablesSelRef); // - tablesSel not change
       //
     }
 
     // - update tablesSel & rowsSel
-    this.#updateTableSel(changeSel);
-    this.#updateRowSel(changeSel);
+    this._updateTableSel(changeSel);
+    this._updateRowSel(changeSel);
 
     //
     return { success: true };
@@ -684,8 +793,10 @@ export class Ds<T extends object> {
 }
 
 /**
- * Locs array sorting
- *
+ * Sorts an array of locations (`Loc`) by table ID (`t`) and row index (`r`).
+ * @param {Loc[]} locs - The array of locations to sort.
+ * @param {"reverse"} [mode] - If `"reverse"`, the sorted array will be reversed.
+ * @returns {Loc[]} A new sorted array of locations.
  */
 export function locsSort(locs: Loc[], mode?: "reverse"): Loc[] {
   const sortedLocs = [...locs].sort((a, b) =>
@@ -695,14 +806,24 @@ export function locsSort(locs: Loc[], mode?: "reverse"): Loc[] {
 }
 
 /**
- * Tids array sorting
- *
+ * Sorts an array of table IDs (`Tid`).
+ * @param {Tid[]} tid - The array of table IDs to sort.
+ * @param {"reverse"} [mode] - If `"reverse"`, the sorted array will be reversed.
+ * @returns {Tid[]} A new sorted array.
  */
-export function tidsSort(num: number[], mode?: "reverse"): number[] {
-  const sortedNums = [...num].sort((a, b) => a - b);
+export function tidsSort(tid: Tid[], mode?: "reverse"): Tid[] {
+  const sortedNums = [...tid].sort((a, b) => a - b);
   return mode === "reverse" ? sortedNums.reverse() : sortedNums;
 }
 
+/**
+ * Filters selected items based on position criteria.
+ * @template S - Selection type (`Tid` or `Loc`).
+ * @param {S[]} sel - The selected items.
+ * @param {(arr: S[]) => S[]} sortFn - Function to sort the selection array.
+ * @param {"top" | "all" | "bottom"} [which] - Selection criteria.
+ * @returns {S[]} The filtered selection.
+ */
 function whichSel<S extends Tid | Loc>(
   sel: S[],
   sortFn: (arr: S[]) => S[],
@@ -728,74 +849,87 @@ function whichSel<S extends Tid | Loc>(
   }
 }
 
+/**
+ * Throws an error if the provided parameter is not allowed.
+ * @param {string | undefined} param - The provided parameter.
+ * @param {string} allowedParams - A string describing the valid parameters.
+ * @throws {Error} Always throws an error with the invalid parameter message.
+ */
 function paramNotAllow(param: string | undefined, allowedParams: string) {
   throw new Error(`Param '${param}' not allow. Valid param: ${allowedParams} `);
 }
 
-function multiSelectionLogic<L extends number | Loc>(
-  loc: L,
+/**
+ * Handles multi-selection logic based on the given mode.
+ * @template L - The selection type, either a table ID (`number`) or a row location (`Loc`).
+ * @param {L} index - The current selection target.
+ * @param {L[]} sel - The array of selected items.
+ * @param {MultiMode} [multiMode] - The multi-selection mode (`additive`, `range`, or `undefined` for single selection).
+ */
+function multiSelectionLogic<L extends Tid | Loc>(
+  index: L,
   sel: L[],
   multiMode?: MultiMode
 ) {
-  // ~ search loc in sel[] and return array index, if not found return -1
-  const i = sel.findIndex((s) =>
-    typeof loc === "number"
-      ? loc === s
-      : (loc as Loc).t === (s as Loc).t && (loc as Loc).r === (s as Loc).r
-  );
+  // ~ Search loc in sel[] and return the array index; if not found, return -1
+  // ~ (i > -1) means the selected item was already selected before
 
-  // ~ ( i > -1 ) meaning is the select item already selected before
+  const i = sel.findIndex((s) =>
+    typeof index === "number"
+      ? index === s
+      : (index as Loc).t === (s as Loc).t && (index as Loc).r === (s as Loc).r
+  );
 
   if (multiMode === undefined) {
     //
     if (i > -1) {
       if (sel.length > 1) {
-        // - multi selected before, clear all and select the new one
+        // - Multiple items were selected before; clear all and select the new one
         sel.length = 0;
-        sel.push(loc);
+        sel.push(index);
       } else {
         // - single selected before, clear
         sel.length = 0;
       }
     } else {
       sel.length = 0;
-      sel.push(loc);
+      sel.push(index);
     }
     //
   } else if (multiMode === "additive") {
     //
-    i > -1 ? sel.splice(i, 1) : sel.push(loc);
+    i > -1 ? sel.splice(i, 1) : sel.push(index);
     //
   } else if (multiMode === "range") {
     //
     if (i > -1) {
-      // - ( loc is selected before )
+      // - ( The item was selected before )
       if (sel.length > 1) {
-        // - multi selected before, clear all and select the new one
+        // - Multiple items were selected before; clear all and select the new one
         sel.length = 0;
-        sel.push(loc);
+        sel.push(index);
       } else {
-        // - single selected before, clear
+        // - A single item was selected before; clear selection
         sel.length = 0;
       }
     } else {
-      // - ( loc is not selected )
+      // - ( The item was not selected )
       if (sel.length === 0) {
-        // - sel array is empty
-        sel.push(loc);
+        // - The selection array is empty; add the item
+        sel.push(index);
         //
       } else if (sel.length > 1) {
-        // - sel array has more then one selected
+        // - Multiple items were selected before; reset selection and select the new one
         sel.length = 0;
-        sel.push(loc);
+        sel.push(index);
         //
       } else if (sel.length === 1) {
-        // - sel array has only one selected
-        //
-        if (typeof loc === "number") {
-          // - is table
+        // - Only one item was selected before
+
+        if (typeof index === "number") {
+          // - Selection is a table
           const firstSelected = sel[0] as number;
-          const currentSelected = loc as number;
+          const currentSelected = index as number;
 
           sel.length = 0;
 
@@ -807,13 +941,14 @@ function multiSelectionLogic<L extends number | Loc>(
           }
           //
         } else {
-          // - is row
+          // - Selection is a row
           const firstLoc = sel[0] as Loc;
-          const currentLoc = loc as Loc;
+          const currentLoc = index as Loc;
 
           sel.length = 0;
 
           if (firstLoc.t === currentLoc.t) {
+            // - Selection is within the same table; select the range of rows
             const startRow = Math.min(firstLoc.r, currentLoc.r);
             const endRow = Math.max(firstLoc.r, currentLoc.r);
 
@@ -821,7 +956,8 @@ function multiSelectionLogic<L extends number | Loc>(
               (sel as Loc[]).push({ t: firstLoc.t, r });
             }
           } else {
-            sel.push(loc);
+            // - Selection spans multiple tables; select only the new item
+            sel.push(index);
           }
           //
         }
