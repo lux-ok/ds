@@ -20,9 +20,6 @@ export class Ds<T extends object> {
   /** The core instance managing dataset operations. */
   protected _core: DsCore<T>;
 
-  /** The current version of the dataset instance. */
-  private _version = "0.2.3";
-
   /** Whether to use `structuredClone()` when handling data. */
   private _useClone?: boolean;
 
@@ -86,14 +83,6 @@ export class Ds<T extends object> {
       found && this._core.rowsSel.push(loc);
     });
     buf.length = 0;
-  }
-
-  /**
-   * Gets the current version.
-   * @returns {string} The current version number.
-   */
-  get version(): string {
-    return this._version;
   }
 
   //
