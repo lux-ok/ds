@@ -14,19 +14,6 @@
  * allowing it to work with different reactive syntaxes in front-end frameworks.
  */
 
-/**
- * @module dsm
- * @typedef {import("./type").DsCore} DsCore
- * @typedef {import("./type").DsMode} DsMode
- * @typedef {import("./type").DsState} DsState
- * @typedef {import("./type").DsStateMap} DsStateMap
- * @typedef {import("./type").Loc} Loc
- * @typedef {import("./type").Tid} Tid
- * @typedef {import("./type").MultiMode} MultiMode
- * @typedef {import("./type").DsModeConfig} DsModeConfig
- * @typedef {import("./type").DsCommonHooks} DsCommonHooks
- */
-
 import { Ds } from "./ds";
 import { DsState, DsStateMap } from "./type";
 import type { DsCore, DsMode, DsCommonHooks, DsModeConfig } from "./type";
@@ -84,14 +71,14 @@ export class Dsm<T extends object> extends Ds<T> {
   /* ~ FSM Mode register */
 
   /**
-   * Registers a new mode with its configuration.
-   *
-   * @template D - Data type for hooks.
-   * @param {DsMode} mode - Mode name.
-   * @param {DsModeConfig<D>} [config] - Configuration for the mode.
+   * Registers a new mode with an optional configuration.
+   * @template D - The data type associated with the mode.
+   * @param {DsMode} mode - The name of the mode to register.
+   * @param {DsModeConfig<D>} [config] - Optional configuration for the mode.
    * @throws {Error} If the mode is already registered or contains invalid characters.
+   * @returns {void}
    */
-  registerMode<D>(mode: DsMode, config?: DsModeConfig<D>) {
+  registerMode<D>(mode: DsMode, config?: DsModeConfig<D>): void {
     if (this._modesReg[mode]) {
       throw new Error(`"${mode}" cannot register, mode dupicated`);
     }
@@ -463,9 +450,11 @@ export class Dsm<T extends object> extends Ds<T> {
    * - Logs the new state.
    * - If the new state is `Normal`, automatically switches to `"idle"` mode.
    * @param {DsState} state - The new state to set.
+   * @returns {void}
+   * @private
    */
 
-  private _changeState(state: DsState) {
+  private _changeState(state: DsState): void {
     // - change state
     this._StateEx = this._core.state ?? DsState.Unknown;
     this._core.state = state;
@@ -490,20 +479,22 @@ export class Dsm<T extends object> extends Ds<T> {
 
   /**
    * Logs the mode change if debugging is enabled.
-   * - Displays the previous and current mode in the console.
+   * **Displays the previous and current mode in the console.**
+   * @returns {void}
    * @private
    */
-  private _printMode() {
+  private _printMode(): void {
     if (this._debug !== true) return;
     console.debug(`Mode changed: ${this._modeEx} > ${this._core.mode}`);
   }
 
   /**
    * Logs the state change if debugging is enabled.
-   * - Displays the mode, previous state, and current state in the console.
+   * **Displays the mode, previous state, and current state in the console.**
+   * @returns {void}
    * @private
    */
-  private _printState() {
+  private _printState(): void {
     if (this._debug !== true) return;
     const mode = this._core.mode;
     const exState = dsStateStr(this._StateEx);

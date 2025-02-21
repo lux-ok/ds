@@ -1,6 +1,10 @@
-src
-bun.lockb
-node_modules
-tests
 .env
+.gitignore
+.npmignore
+node_modules
+src
+test
+rollup.config.js
+package.json
 *.map
+bun.lockb

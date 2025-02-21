@@ -1,11 +1,3 @@
-/**
- * @module ds
- * @typedef {import("./type").DsCore} DsCore
- * @typedef {import("./type").Loc} Loc
- * @typedef {import("./type").Tid} Tid
- * @typedef {import("./type").MultiMode} MultiMode
- */
-
 import type { DsCore, Loc, Tid, MultiMode } from "./type";
 
 /**
@@ -19,9 +11,6 @@ export class Ds<T extends object> {
 
   /** The core instance managing dataset operations. */
   protected _core: DsCore<T>;
-
-  /** The current version of the dataset instance. */
-  private _version = "0.2.3";
 
   /** Whether to use `structuredClone()` when handling data. */
   private _useClone?: boolean;
@@ -86,14 +75,6 @@ export class Ds<T extends object> {
       found && this._core.rowsSel.push(loc);
     });
     buf.length = 0;
-  }
-
-  /**
-   * Gets the current version of the dataset.
-   * @returns {string} The dataset version.
-   */
-  get version(): string {
-    return this._version;
   }
 
   //
@@ -313,8 +294,9 @@ export class Ds<T extends object> {
   /**
    * Sorts the selected table indices in the specified direction.
    * @param {"forward" | "reverse"} [direction] - The sorting direction, defaults to "forward".
+   * @returns {void}
    */
-  sortTablesSel(direction?: "forward" | "reverse") {
+  sortTablesSel(direction?: "forward" | "reverse"): void {
     this._core.tablesSel.sort((a, b) =>
       direction === "reverse" ? b - a : a - b
     );
@@ -323,8 +305,9 @@ export class Ds<T extends object> {
   /**
    * Sorts the selected rows based on table and row indices in the specified direction.
    * @param {"forward" | "reverse"} [direction] - The sorting direction, defaults to "forward".
+   * @returns {void}
    */
-  sortRowsSel(direction?: "forward" | "reverse") {
+  sortRowsSel(direction?: "forward" | "reverse"): void {
     this._core.rowsSel.sort((a, b) => {
       if (a.t === b.t) return direction === "reverse" ? b.r - a.r : a.r - b.r;
       return direction === "reverse" ? b.t - a.t : a.t - b.t;
@@ -851,11 +834,12 @@ function whichSel<S extends Tid | Loc>(
 
 /**
  * Throws an error if the provided parameter is not allowed.
- * @param {string | undefined} param - The provided parameter.
+ * @param {string | undefined} param - The invalid parameter.
  * @param {string} allowedParams - A string describing the valid parameters.
- * @throws {Error} Always throws an error with the invalid parameter message.
+ * @throws {Error}  Always throws an error indicating the valid parameters.
+ * @returns {void}
  */
-function paramNotAllow(param: string | undefined, allowedParams: string) {
+function paramNotAllow(param: string | undefined, allowedParams: string): void {
   throw new Error(`Param '${param}' not allow. Valid param: ${allowedParams} `);
 }
 
@@ -865,12 +849,13 @@ function paramNotAllow(param: string | undefined, allowedParams: string) {
  * @param {L} index - The current selection target.
  * @param {L[]} sel - The array of selected items.
  * @param {MultiMode} [multiMode] - The multi-selection mode (`additive`, `range`, or `undefined` for single selection).
+ * @returns {void}
  */
 function multiSelectionLogic<L extends Tid | Loc>(
   index: L,
   sel: L[],
   multiMode?: MultiMode
-) {
+): void {
   // ~ Search loc in sel[] and return the array index; if not found, return -1
   // ~ (i > -1) means the selected item was already selected before
 

@@ -1,48 +1,15 @@
 {
-  "name": "@lux721/ds",
-  "version": "0.2.3",
+  "name": "@lux721/ds-dev",
+  "version": "0.2.4",
+  "private": true,
   "author": "Thomas Choi",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thomaschoi721/ds.git"
   },
-  "description": "Generic dataset control library for js/ts",
-  "keywords": [
-    "javascript",
-    "typescript",
-    "npm",
-    "generic dataset",
-    "generic data tables",
-    "multi selection",
-    "crud FSM",
-    "tables",
-    "rows"
-  ],
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
   "type": "module",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "README.MD"
-  ],
-  "exports": {
-    ".": {
-      "require": "./dist/index.cjs",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./func": {
-      "require": "./dist/func/index.cjs",
-      "import": "./dist/func/index.js",
-      "types": "./dist/func/index.d.ts"
-    }
-  },
   "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "rimraf": "^6.0.1",
     "rollup": "^4.34.8",
@@ -53,6 +20,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "watch": "rollup -c -w"
+    "watch": "rollup -c -w",
+    "docs": "typedoc"
   }
 }
