@@ -1,5 +1,5 @@
 {
-  "name": "@lux721/ds-dev",
+  "name": "@lux721/ds",
   "version": "0.2.4",
   "private": true,
   "author": "Thomas Choi",
@@ -20,6 +20,6 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "docs": "typedoc"
+    "docs": "typedoc --out docs src"
   }
 }

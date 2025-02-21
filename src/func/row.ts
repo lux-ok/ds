@@ -1,7 +1,7 @@
 import { Ds } from "../ds";
 import { Dsm } from "../dsm";
 import type { Loc, Tid } from "../type";
-import { singleRowSelection, singleTableSelection } from "../util";
+import { singleRowSelection, singleTableSelection } from "./util";
 
 /**
  * Adds multiple new rows to the dataset.

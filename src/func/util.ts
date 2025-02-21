@@ -1,6 +1,6 @@
-import { Ds } from "./ds";
-import { Dsm } from "./dsm";
-import type { Loc, Tid } from "./type";
+import { Ds } from "../ds";
+import { Dsm } from "../dsm";
+import type { Loc, Tid } from "../type";
 
 export function singleTableSelection<T extends object>(
   ds: Ds<T> | Dsm<T>,

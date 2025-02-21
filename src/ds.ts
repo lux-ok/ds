@@ -1,7 +1,7 @@
 import type { DsCore, Loc, Tid, MultiMode } from "./type";
 
 /**
- * A generic data set manager.
+ * A generic dataset manager.
  * @template {object} T - The type of the data structure managed by this instance.
  */
 export class Ds<T extends object> {

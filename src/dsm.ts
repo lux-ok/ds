@@ -1,5 +1,5 @@
 /**
- * @file Implements the Dsm class, extending Ds with additional features. Dsm - Dataset with state machine
+ * Implements the Dsm class, extending Ds with additional features. Dsm - Dataset with state machine
  *
  * The state can skip "starting" and "submitting" for direct execution,
  * so there are no restrictions on state changes during `changeState()`.

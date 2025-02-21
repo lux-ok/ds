@@ -1,7 +1,7 @@
 import { Ds } from "../ds";
 import { Dsm } from "../dsm";
 import type { Tid } from "../type";
-import { singleTableSelection } from "../util";
+import { singleTableSelection } from "./util";
 
 /**
  * Creates a new table with the provided rows.
