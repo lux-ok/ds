@@ -1,8 +1,3 @@
-/**
- * @module table
- * @typedef {import("../type").Tid} Tid
- */
-
 import { Ds } from "../ds";
 import { Dsm } from "../dsm";
 import type { Tid } from "../type";

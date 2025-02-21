@@ -14,19 +14,6 @@
  * allowing it to work with different reactive syntaxes in front-end frameworks.
  */
 
-/**
- * @module dsm
- * @typedef {import("./type").DsCore} DsCore
- * @typedef {import("./type").DsMode} DsMode
- * @typedef {import("./type").DsState} DsState
- * @typedef {import("./type").DsStateMap} DsStateMap
- * @typedef {import("./type").Loc} Loc
- * @typedef {import("./type").Tid} Tid
- * @typedef {import("./type").MultiMode} MultiMode
- * @typedef {import("./type").DsModeConfig} DsModeConfig
- * @typedef {import("./type").DsCommonHooks} DsCommonHooks
- */
-
 import { Ds } from "./ds";
 import { DsState, DsStateMap } from "./type";
 import type { DsCore, DsMode, DsCommonHooks, DsModeConfig } from "./type";

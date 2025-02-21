@@ -28,6 +28,6 @@ console.log(dsStateStr(4));
 
 console.log(DsStateMap);
 
-// console.log(ds.hasRow({t:"123",r:false}))
+console.log(ds.hasRow({ t: 1, r: 2 }));
 
 console.log(ds.tables);

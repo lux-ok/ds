@@ -1,9 +1,3 @@
-/**
- * @module row
- * @typedef {import("../type").Loc} Loc
- * @typedef {import("../type").Tid} Tid
- */
-
 import { Ds } from "../ds";
 import { Dsm } from "../dsm";
 import type { Loc, Tid } from "../type";

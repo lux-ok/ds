@@ -1,11 +1,3 @@
-/**
- * @module ds
- * @typedef {import("./type").DsCore} DsCore
- * @typedef {import("./type").Loc} Loc
- * @typedef {import("./type").Tid} Tid
- * @typedef {import("./type").MultiMode} MultiMode
- */
-
 import type { DsCore, Loc, Tid, MultiMode } from "./type";
 
 /**
