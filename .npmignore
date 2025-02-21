@@ -5,6 +5,6 @@ node_modules
 src
 test
 rollup.config.js
-package.json  // 忽略開發用的 package.json
+package.json
 *.map
 bun.lockb

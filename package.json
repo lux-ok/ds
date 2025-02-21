@@ -3,6 +3,10 @@
   "version": "0.2.4",
   "private": true,
   "author": "Thomas Choi",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thomaschoi721/ds.git"
+  },
   "type": "module",
   "devDependencies": {
     "@rollup/plugin-json": "^6.1.0",

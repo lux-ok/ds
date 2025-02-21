@@ -1,7 +1,7 @@
 import del from "rollup-plugin-delete";
 import typescript from "@rollup/plugin-typescript";
-import json from "@rollup/plugin-json";
-import pkg from "./publish.package.json"; // package.json for publish
+// import json from "@rollup/plugin-json";
+// import pkg from "./publish.package.json"; // package.json for publish
 
 export default {
   input: {
@@ -25,7 +25,6 @@ export default {
   ],
   plugins: [
     del({ targets: "dist/**/*", hook: "buildStart" }),
-    json(),
     typescript({
       tsconfig: "./tsconfig.json",
       declarationDir: "dist", // .d.ts to dist folder
