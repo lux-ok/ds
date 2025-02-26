@@ -42,13 +42,6 @@ export enum DsState {
   Appling = 4,
 }
 
-/** Maps DsState values to their string representations. */
-export const DsStateMap = new Map<DsState, string>(
-  Object.values(DsState)
-    .filter((value) => typeof value === "number")
-    .map((value) => [value as DsState, DsState[value as number]])
-);
-
 //
 
 /**

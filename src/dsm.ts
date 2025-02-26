@@ -15,7 +15,7 @@
  */
 
 import { Ds } from "./ds";
-import { DsState, DsStateMap } from "./type";
+import { DsState } from "./type";
 import type { DsCore, DsMode, DsCommonHooks, DsModeConfig } from "./type";
 
 /**
@@ -503,11 +503,18 @@ export class Dsm<T extends object> extends Ds<T> {
   }
 }
 
+/** Maps DsState values to their string representations. */
+export const dsStateMap = new Map<DsState, string>(
+  Object.values(DsState)
+    .filter((value) => typeof value === "number")
+    .map((value) => [value as DsState, DsState[value as number]])
+);
+
 /**
  * Converts a `DsState` value to its corresponding string representation.
  * @param {DsState} [state] - The state to convert.
  * @returns {string} The string representation of the state, or "Unknown" if not found.
  */
 export function dsStateStr(state?: DsState): string {
-  return DsStateMap.get(state ?? DsState.Unknown) ?? "Unknown";
+  return dsStateMap.get(state ?? DsState.Unknown) ?? "Unknown";
 }
