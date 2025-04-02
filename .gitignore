@@ -176,3 +176,4 @@ dist
 
 
 bun.lock
+*.bak
