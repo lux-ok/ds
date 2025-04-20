@@ -394,7 +394,8 @@ export class Dsm<T extends object> extends Ds<T> {
         } else {
           // - error: back to Start
           this._modesReg[this._core.mode!]?.applyFail?.(data);
-          this._changeState(this._StateEx); // check
+          // this._changeState(this._StateEx); // check
+          this._changeState(DsState.Starting); // check
           //
         }
         //
