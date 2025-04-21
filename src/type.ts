@@ -122,3 +122,12 @@ export type DsCommonHooks<D = any> = {
   modeChanged?: HookModeChanged;
   stateChanged?: HookStateChanged;
 };
+
+export type HookRowSelectChanged = () => void;
+
+export type HookTableSelectChanged = () => void;
+
+export type DsSelectChangedHooks = {
+  rowSelectChanged?: HookRowSelectChanged;
+  tableSelectChanged?: HookTableSelectChanged;
+};

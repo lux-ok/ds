@@ -1,4 +1,4 @@
-import type { DsCore, Loc, Tid, MultiMode } from "./type";
+import type { DsCore, Loc, Tid, MultiMode, DsSelectChangedHooks } from "./type";
 
 /**
  * A generic dataset manager.
@@ -15,6 +15,8 @@ export class Ds<T extends object> {
   /** Whether to use `structuredClone()` when handling data. */
   private _useClone?: boolean;
 
+  protected _selectChangedHooks?: DsSelectChangedHooks;
+
   /** Stores the previous selection reference. */
   private _oldSelRef: { tables: T[][]; rows: T[] } = { tables: [], rows: [] };
 
@@ -29,9 +31,14 @@ export class Ds<T extends object> {
    * @param {DsCore<T>} params.core - The core instance managing data operations.
    * @param {boolean} [params.useClone=true] - Whether to use `structuredClone()` when handling data.
    */
-  constructor(params: { core: DsCore<T>; useClone?: boolean }) {
+  constructor(params: {
+    core: DsCore<T>;
+    useClone?: boolean;
+    selectChangedHooks?: DsSelectChangedHooks;
+  }) {
     this._core = params.core;
     this._useClone = params.useClone ?? true; // - default use structureClone()
+    this._selectChangedHooks = params.selectChangedHooks;
   }
 
   //
@@ -340,6 +347,8 @@ export class Ds<T extends object> {
     if (success) {
       multiSelectionLogic(tid, this._core.tablesSel, option?.multiMode);
       option?.sort && this.sortTablesSel(option.sort);
+      // !
+      this._selectChangedHooks?.tableSelectChanged?.();
     }
 
     return { success };
@@ -369,6 +378,8 @@ export class Ds<T extends object> {
     if (success) {
       multiSelectionLogic(loc, this._core.rowsSel, option?.multiMode);
       option?.sort && this.sortRowsSel(option.sort);
+      // !
+      this._selectChangedHooks?.rowSelectChanged?.();
     }
 
     return { success };

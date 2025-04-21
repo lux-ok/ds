@@ -16,7 +16,13 @@
 
 import { Ds } from "./ds";
 import { DsState, DsStateMap } from "./type";
-import type { DsCore, DsMode, DsCommonHooks, DsModeConfig } from "./type";
+import type {
+  DsCore,
+  DsMode,
+  DsCommonHooks,
+  DsModeConfig,
+  DsSelectChangedHooks,
+} from "./type";
 
 /**
  * Extended dataset manager with state machine.
@@ -56,6 +62,7 @@ export class Dsm<T extends object> extends Ds<T> {
   constructor(params: {
     core: DsCore<T>;
     useClone?: boolean;
+    selectChangedHooks?: DsSelectChangedHooks;
     hooks?: DsCommonHooks;
     debug?: boolean;
   }) {
