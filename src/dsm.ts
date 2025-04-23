@@ -21,7 +21,11 @@ import type {
   DsMode,
   DsCommonHooks,
   DsModeConfig,
-  DsSelectChangedHooks,
+  // DsSelectChangedHooks,
+  DsmCommonHooks,
+  HookModeChanged,
+  HookStateChanged,
+  HookBusyChanged,
 } from "./type";
 
 /**
@@ -37,7 +41,7 @@ export class Dsm<T extends object> extends Ds<T> {
   private _debug: boolean | undefined;
 
   /** Modes registry. */
-  private _modesReg: Record<DsMode, DsModeConfig> = {};
+  private _modesReg: Record<DsMode, DsModeConfig<any>> = {};
 
   /** Previous mode. */
   private _modeEx: string = "init";
@@ -46,7 +50,13 @@ export class Dsm<T extends object> extends Ds<T> {
   private _StateEx: DsState = DsState.Unknown;
 
   /** Common hooks. */
-  private _hooks: DsCommonHooks | undefined;
+  private _dsmHooks:
+    | {
+        modeChanged?: HookModeChanged;
+        stateChanged?: HookStateChanged;
+        busyChanged?: HookBusyChanged;
+      }
+    | undefined;
 
   //
 
@@ -56,19 +66,19 @@ export class Dsm<T extends object> extends Ds<T> {
    * @param {object} params - Initialization parameters.
    * @param {DsCore<T>} params.core - Core dataset structure.
    * @param {boolean} [params.useClone] - Whether to use cloning.
-   * @param {DsCommonHooks} [params.hooks] - Hooks configuration.
+   * @param {DsmCommonHooks} [params.hooks] - Hooks configuration.
    * @param {boolean} [params.debug] - Debug mode flag.
    */
   constructor(params: {
     core: DsCore<T>;
     useClone?: boolean;
-    selectChangedHooks?: DsSelectChangedHooks;
-    hooks?: DsCommonHooks;
+    // selectChangedHooks?: DsSelectChangedHooks;
+    hooks?: DsmCommonHooks;
     debug?: boolean;
   }) {
     super(params);
     this._debug = params.debug;
-    this._hooks = params.hooks;
+    this._dsmHooks = params.hooks;
     this.registerMode("idle", {});
     this._changeState(DsState.Normal);
   }
@@ -106,7 +116,7 @@ export class Dsm<T extends object> extends Ds<T> {
    * Gets the registered modes.
    * @returns {Record<string, DsModeConfig>} The registered mode configurations.
    */
-  get modesReg(): Record<string, DsModeConfig> {
+  get modesReg(): Record<string, DsModeConfig<any>> {
     return this._modesReg;
   }
 
@@ -444,7 +454,7 @@ export class Dsm<T extends object> extends Ds<T> {
 
     // - mode changed & exec hook function
     this._printMode();
-    this._hooks?.modeChanged?.({ ex: this._modeEx, now: mode });
+    this._dsmHooks?.modeChanged?.({ ex: this._modeEx, now: mode });
     this._modesReg[mode].modeChanged?.({ ex: this._modeEx, now: mode });
 
     return true;
@@ -463,16 +473,26 @@ export class Dsm<T extends object> extends Ds<T> {
    */
 
   private _changeState(state: DsState): void {
+    const busyEx = this.busy; // !
+
     // - change state
     this._StateEx = this._core.state ?? DsState.Unknown;
     this._core.state = state;
 
     // - execute hook
-    this._hooks?.stateChanged?.(this.mode, { ex: this._StateEx, now: state });
+    this._dsmHooks?.stateChanged?.(this.mode, {
+      ex: this._StateEx,
+      now: state,
+    });
     this._modesReg[this.mode]?.stateChanged?.(this.mode, {
       ex: this._StateEx,
       now: state,
     });
+
+    // !
+    const busy = this.busy;
+    if (busy !== busyEx) this._dsmHooks?.busyChanged?.(busy);
+    // !
 
     this._printState();
 

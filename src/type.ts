@@ -56,7 +56,7 @@ export const DsStateMap = new Map<DsState, string>(
  * @template D - Data type returned in the response.
  * @returns {Promise<{ success: boolean; data: D | null }>} Promise resolving with success status and optional data.
  */
-export type HookApplied<D = any> = () => Promise<{
+export type HookApplied<D> = () => Promise<{
   success: boolean;
   data: D | null;
 }>;
@@ -66,14 +66,14 @@ export type HookApplied<D = any> = () => Promise<{
  * @template D - Data type passed to the hook.
  * @param {D} [data] - Optional data related to the successful operation.
  */
-export type HookApplySuccess<D = any> = (data?: D) => void;
+export type HookApplySuccess<D> = (data?: D | null) => void;
 
 /**
  * Hook triggered on a failed apply operation.
  * @template D - Data type passed to the hook.
  * @param {D} [data] - Optional data related to the failed operation.
  */
-export type HookApplyFail<D = any> = (data?: D) => void;
+export type HookApplyFail<D> = (data?: D | null) => void;
 
 /**
  * Hook triggered when the mode changes.
@@ -95,6 +95,8 @@ export type HookStateChanged = (
   state: { ex: DsState; now: DsState }
 ) => void;
 
+export type HookBusyChanged = (busy: boolean) => void;
+
 /**
  * Configuration for mode-specific hooks.
  * @template D - Data type for hooks.
@@ -104,12 +106,20 @@ export type HookStateChanged = (
  * @property {HookModeChanged} [modeChanged] - Hook triggered when mode changes.
  * @property {HookStateChanged} [stateChanged] - Hook triggered when state changes.
  */
-export type DsModeConfig<D = any> = {
+export type DsModeConfig<D> = {
   applied?: HookApplied<D>;
   applySuccess?: HookApplySuccess<D>;
   applyFail?: HookApplyFail<D>;
   modeChanged?: HookModeChanged;
   stateChanged?: HookStateChanged;
+};
+
+export type HookRowSelectChanged = () => void;
+export type HookTableSelectChanged = () => void;
+
+export type DsCommonHooks = {
+  rowSelectChanged?: HookRowSelectChanged;
+  tableSelectChanged?: HookTableSelectChanged;
 };
 
 /**
@@ -118,16 +128,8 @@ export type DsModeConfig<D = any> = {
  * @property {HookModeChanged} [modeChanged] - Hook triggered when mode changes.
  * @property {HookStateChanged} [stateChanged] - Hook triggered when state changes.
  */
-export type DsCommonHooks<D = any> = {
+export type DsmCommonHooks = DsCommonHooks & {
   modeChanged?: HookModeChanged;
   stateChanged?: HookStateChanged;
-};
-
-export type HookRowSelectChanged = () => void;
-
-export type HookTableSelectChanged = () => void;
-
-export type DsSelectChangedHooks = {
-  rowSelectChanged?: HookRowSelectChanged;
-  tableSelectChanged?: HookTableSelectChanged;
+  busyChanged?: HookBusyChanged;
 };
