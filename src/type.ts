@@ -39,7 +39,7 @@ export enum DsState {
   Normal = 1,
   Starting = 2,
   Submitting = 3,
-  Appling = 4,
+  Applying = 4,
 }
 
 /** Maps DsState values to their string representations. */

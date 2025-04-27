@@ -184,8 +184,8 @@ export class Dsm<T extends object> extends Ds<T> {
    * Checks if the current state is applying.
    * @returns {boolean} `true` if the state is applying, otherwise `false`.
    */
-  get isAppling(): boolean {
-    return this._core.state === DsState.Appling;
+  get isApplying(): boolean {
+    return this._core.state === DsState.Applying;
   }
 
   /**
@@ -261,7 +261,7 @@ export class Dsm<T extends object> extends Ds<T> {
    * @param {"submitted" | "applied"} [option] - Determines how the state transitions:
    * - `undefined`: Moves to `Starting` state.
    * - `"submitted"`: Skips `Starting` and moves directly to `Submitting` state.
-   * - `"applied"`: Skips `Starting` and `Submitting`, moves directly to `Appling` state, and triggers processing.
+   * - `"applied"`: Skips `Starting` and `Submitting`, moves directly to `Applying` state, and triggers processing.
    * @returns {boolean} `true` if the mode was successfully started, otherwise `false`.
    * @throws {Error} If an unknown option is provided in pure JavaScript environments.
    */
@@ -289,8 +289,8 @@ export class Dsm<T extends object> extends Ds<T> {
       this._changeState(DsState.Submitting);
       //
     } else if (option === "applied") {
-      // - bypass [starting] & [submitting], goto [Appling]
-      this._changeState(DsState.Appling);
+      // - bypass [starting] & [submitting], goto [Applying]
+      this._changeState(DsState.Applying);
       this._process();
       //
     } else {
@@ -306,7 +306,7 @@ export class Dsm<T extends object> extends Ds<T> {
    * @param {"cancel" | "applied"} [option] - Determines how the state transitions:
    * - `undefined`: Moves to `Submitting` state.
    * - `"cancel"`: Cancels the process and returns to `Normal` state.
-   * - `"applied"`: Skips `Submitting`, moves directly to `Appling` state, and triggers processing.
+   * - `"applied"`: Skips `Submitting`, moves directly to `Applying` state, and triggers processing.
    * @returns {boolean} `true` if the submission was successful, otherwise `false`.
    * @throws {Error} If an unknown option is provided in pure JavaScript environments.
    */
@@ -329,8 +329,8 @@ export class Dsm<T extends object> extends Ds<T> {
       this._changeState(DsState.Normal);
       //
     } else if (option === "applied") {
-      // - bypass [Submiting], goto [Appling]
-      this._changeState(DsState.Appling);
+      // - bypass [Submiting], goto [Applying]
+      this._changeState(DsState.Applying);
       this._process();
       //
     } else {
@@ -344,7 +344,7 @@ export class Dsm<T extends object> extends Ds<T> {
   /**
    * Applies the current process and updates the state accordingly.
    * @param {"cancel"} [option] - Determines how the state transitions:
-   * - `undefined`: Moves to `Appling` state and triggers processing.
+   * - `undefined`: Moves to `Applying` state and triggers processing.
    * - `"cancel"`: Reverts to the previous state.
    * @returns {boolean} `true` if the application was successful, otherwise `false`.
    * @throws {Error} If an unknown option is provided in pure JavaScript environments.
@@ -354,14 +354,14 @@ export class Dsm<T extends object> extends Ds<T> {
 
     // - flow limiter
     if (this._core.state !== DsState.Submitting) {
-      console.log("invalid state, cannot goto Appling");
+      console.log("invalid state, cannot goto Applying");
       return false;
     }
 
     // - change state
     if (option === undefined) {
-      // - goto [Appling]
-      this._changeState(DsState.Appling);
+      // - goto [Applying]
+      this._changeState(DsState.Applying);
       return this._process();
       //
     } else if (option === "cancel") {
@@ -385,7 +385,7 @@ export class Dsm<T extends object> extends Ds<T> {
    * @returns {boolean} `true` if the process started, otherwise `false`.
    */
   private _process(): boolean {
-    // - state: [Appling]
+    // - state: [Applying]
 
     // - undefined object guard
     const process = this._modesReg[this._core.mode!]?.applied;
